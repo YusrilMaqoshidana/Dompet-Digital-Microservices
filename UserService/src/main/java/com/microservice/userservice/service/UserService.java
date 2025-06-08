@@ -20,30 +20,29 @@ public class UserService {
         return userRepository.findAll();
     }
 
-    public UserModel getByUserId(Long userId){
+    public UserModel getByUserId(String userId){
         return userRepository.getUserModelByUserId(userId);
     }
-//    public UserModel getByUserId(UUID userId){
-//        return userRepository.getUserModelByUserId(userId);
-//    }
 
+    public UserModel updateUsername(String userId, String newName){
+        UserModel user = userRepository.getUserModelByUserId(userId);
+        user.setUsername(newName);
+        return userRepository.save(user);
+    }
+
+    public void delete(String userId){
+        userRepository.deleteById(userId);
+    }
 
     public UserModel create(UserDTOResponse newUser) {
         UserModel user = toUserModel(newUser);
         return userRepository.save(user);
     }
 
-    public void delete(Long userId){
-        userRepository.deleteById(userId);
-    }
-//    public void delete(UUID userId){
-//        userRepository.deleteById(userId);
-//    }
-
     private UserModel toUserModel(UserDTOResponse dto) {
         UserModel user = new UserModel();
-        long generatedId = ThreadLocalRandom.current().nextLong(1_000_000_000L, 9_999_999_999L);
-//        UUID generatedId = UUID.randomUUID();
+//        long generatedId = ThreadLocalRandom.current().nextLong(1_000_000_000L, 9_999_999_999L);
+        String generatedId = UUID.randomUUID().toString();
         user.setUserId(generatedId);
         user.setEmail(dto.getEmail());
         user.setUsername(dto.getUsername());

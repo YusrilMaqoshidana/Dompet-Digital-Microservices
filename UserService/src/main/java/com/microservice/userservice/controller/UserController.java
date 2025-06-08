@@ -29,10 +29,11 @@ public class UserController {
             if (users.isEmpty()){
                 return new ResponseEntity<>(
                         new ApiResponse<>(
-                                HttpStatus.NOT_FOUND.value(),
-                                "No users found"
+                                HttpStatus.OK.value(),
+                                "No users found",
+                                users
                         ),
-                        HttpStatus.NOT_FOUND
+                        HttpStatus.OK
                 );
             }
             ApiResponse<List<UserModel>> response = new ApiResponse<>(
@@ -44,6 +45,37 @@ public class UserController {
         } catch (Exception e) {
 
             ApiResponse<List<UserModel>> errorResponse = new ApiResponse<>(
+                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    "An error occurred while fetching users. %s." + e.getMessage()
+            );
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/detail")
+    public ResponseEntity<ApiResponse<UserModel>> getDetailUser(
+            @RequestParam("user_id") String userId
+    ) {
+        try {
+            UserModel users = userService.getByUserId(userId);
+            if (users == null){
+                return new ResponseEntity<>(
+                        new ApiResponse<>(
+                                HttpStatus.NOT_FOUND.value(),
+                                "No users found"
+                        ),
+                        HttpStatus.NOT_FOUND
+                );
+            }
+            ApiResponse<UserModel> response = new ApiResponse<>(
+                    HttpStatus.OK.value(),
+                    "Successfully get detail users",
+                    users
+            );
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+
+            ApiResponse<UserModel> errorResponse = new ApiResponse<>(
                     HttpStatus.INTERNAL_SERVER_ERROR.value(),
                     "An error occurred while fetching users. %s." + e.getMessage()
             );
@@ -74,9 +106,32 @@ public class UserController {
         }
     }
 
+    @PutMapping
+    public ResponseEntity<ApiResponse<UserModel>> updateUsername(
+            @RequestParam("user_id") String userId,
+            @RequestParam("username") String newName
+    ) {
+        try {
+            UserModel users = userService.updateUsername(userId, newName);
+            ApiResponse<UserModel> response = new ApiResponse<>(
+                    HttpStatus.OK.value(),
+                    "Successfully get detail users",
+                    users
+            );
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+
+            ApiResponse<UserModel> errorResponse = new ApiResponse<>(
+                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    "An error occurred while fetching users. %s." + e.getMessage()
+            );
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @DeleteMapping
     public ResponseEntity<ApiResponse<Void>> deleteUser(
-            @RequestParam("user_id") Long userId
+            @RequestParam("user_id") String userId
     ) {
         try {
             userService.delete(userId);

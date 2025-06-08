@@ -22,7 +22,6 @@ rules:
     tables:
       t_user:
         actualDataNodes: ds${0..1}.t_user
-
     defaultDatabaseStrategy:
       standard:
         shardingColumn: user_id
@@ -33,7 +32,7 @@ rules:
       database_inline:
         type: INLINE
         props:
-          algorithm-expression: ds${user_id % 2}
+          algorithm-expression: ds${user_id.hashCode().abs() % 2}
 
 props:
   sql-show: false
