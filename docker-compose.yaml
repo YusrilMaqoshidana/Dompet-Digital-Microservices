@@ -35,9 +35,9 @@ services:
     image: eureka-service
     container_name: eureka-service
     volumes:
-      - /home/usereal/Development/Java/DompetDigital/gateway/target/gateway-0.0.1-SNAPSHOT.jar:/gateway.jar
-      - /home/usereal/Development/Java/DompetDigital/TransactionService/target/transaction-service-0.0.1-SNAPSHOT.jar:/transaction-service.jar
-      - /home/usereal/Development/Java/DompetDigital/UserService/target/user-service-0.0.1-SNAPSHOT.jar:/user-service.jar
+      - ./gateway/target/gateway-0.0.1-SNAPSHOT.jar:/gateway.jar
+      - ./TransactionService/target/transaction-service-0.0.1-SNAPSHOT.jar:/transaction-service.jar
+      - ./UserService/target/user-service-0.0.1-SNAPSHOT.jar:/user-service.jar
     ports:
       - "8761:8761"
     networks:
