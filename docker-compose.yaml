@@ -15,6 +15,7 @@ services:
     networks:
       - shard-net
 
+<<<<<<< HEAD
   eureka-service:
     build:
       context: ./EurekaService
@@ -23,6 +24,19 @@ services:
     container_name: eureka-service
     ports:
       - "5000:5000"
+=======
+  transaction-service:
+    build:
+        context: ./TransactionService
+        dockerfile: Dockerfile
+    image: transaction-service
+    container_name: transaction-service
+    ports:
+      - "8081:8080"
+    depends_on:
+      postgresql-db-transactions:
+        condition: service_healthy
+>>>>>>> 03e5b57b4399f076085ef756f6df8a0c5dfb2912
     networks:
       - shard-net
 
@@ -66,9 +80,25 @@ services:
       retries: 10 
       start_period: 30s
 
+  postgresql-db-transactions:
+    image: postgres:13
+    container_name: postgre_db_transactions
+    restart: always
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: transactions
+    volumes:
+      - postgre_db_transactions:/var/lib/postgresql/data
+    networks:
+      - shard-net
+
 volumes:
   mysql_data_ds0:
   mysql_data_ds1:
+  postgre_db_transactions:
 
 networks:
   shard-net:
