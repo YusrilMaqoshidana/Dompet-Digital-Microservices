@@ -15,6 +15,20 @@ services:
     networks:
       - shard-net
 
+  transaction-service:
+    build:
+        context: ./TransactionService
+        dockerfile: Dockerfile
+    image: transaction-service
+    container_name: transaction-service
+    ports:
+      - "8081:8080"
+    depends_on:
+      postgresql-db-transactions:
+        condition: service_healthy
+    networks:
+      - shard-net
+
   ds0:
     image: mysql:8.0
     container_name: mysql_ds0
@@ -55,9 +69,25 @@ services:
       retries: 10 
       start_period: 30s
 
+  postgresql-db-transactions:
+    image: postgres:13
+    container_name: postgre_db_transactions
+    restart: always
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: transactions
+    volumes:
+      - postgre_db_transactions:/var/lib/postgresql/data
+    networks:
+      - shard-net
+
 volumes:
   mysql_data_ds0:
   mysql_data_ds1:
+  postgre_db_transactions:
 
 networks:
   shard-net:
