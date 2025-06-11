@@ -1,0 +1,64 @@
+services:
+  user-service:
+    build:
+        context: .
+        dockerfile: Dockerfile
+    image: user-service
+    container_name: user-service
+    ports:
+      - "8080:8080"
+    depends_on:
+      ds0:
+        condition: service_healthy
+      ds1:
+        condition: service_healthy 
+    networks:
+      - shard-net
+
+  ds0:
+    image: mysql:8.0
+    container_name: mysql_ds0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: db_1
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data_ds0:/var/lib/mysql
+    networks:
+      - shard-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-psecret"]
+      interval: 5s
+      timeout: 3s
+      retries: 10 
+      start_period: 30s
+
+  ds1:
+    image: mysql:8.0
+    container_name: mysql_ds1
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: db_2
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data_ds1:/var/lib/mysql
+    networks:
+      - shard-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-psecret"]
+      interval: 5s
+      timeout: 3s
+      retries: 10 
+      start_period: 30s
+
+volumes:
+  mysql_data_ds0:
+  mysql_data_ds1:
+
+networks:
+  shard-net:
+    driver: bridge

@@ -1,0 +1,38 @@
+mode:
+  type: Standalone
+  repository:
+    type: JDBC
+
+dataSources:
+  ds0:
+    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+    driverClassName: com.mysql.cj.jdbc.Driver
+    jdbcUrl: jdbc:mysql://mysql_ds0:3306/db_1?useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: secret
+  ds1:
+    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+    driverClassName: com.mysql.cj.jdbc.Driver
+    jdbcUrl: jdbc:mysql://mysql_ds1:3307/db_2?useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: secret
+
+rules:
+  - !SHARDING
+    tables:
+      t_user:
+        actualDataNodes: ds${0..1}.t_user
+    defaultDatabaseStrategy:
+      standard:
+        shardingColumn: user_id
+        shardingAlgorithmName: database_inline
+    defaultTableStrategy:
+      none:
+    shardingAlgorithms:
+      database_inline:
+        type: INLINE
+        props:
+          algorithm-expression: ds${user_id.hashCode().abs() % 2}
+
+props:
+  sql-show: false
