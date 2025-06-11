@@ -15,6 +15,17 @@ services:
     networks:
       - shard-net
 
+  eureka-service:
+    build:
+      context: ./EurekaService
+      dockerfile: Dockerfile
+    image: eureka-service
+    container_name: eureka-service
+    ports:
+      - "5000:5000"
+    networks:
+      - shard-net
+
   ds0:
     image: mysql:8.0
     container_name: mysql_ds0
