@@ -1,3 +1,4 @@
+# sharding.yaml
 mode:
   type: Standalone
   repository:
