@@ -4,6 +4,6 @@ WORKDIR /app
 
 COPY target/eureka-service-0.0.1-SNAPSHOT.jar /app/eureka-service-0.0.1-SNAPSHOT.jar
 
-EXPOSE 5000
+EXPOSE 8761
 
 CMD ["java", "-jar", "/app/eureka-service-0.0.1-SNAPSHOT.jar"]
