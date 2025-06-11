@@ -1,5 +1,6 @@
 package com.microservice.userservice.service;
 
+import com.google.common.hash.HashCode;
 import com.microservice.userservice.DTO.UserDTOResponse;
 import com.microservice.userservice.models.UserModel;
 import com.microservice.userservice.repository.UserRepository;
@@ -43,10 +44,27 @@ public class UserService {
         UserModel user = new UserModel();
 //        long generatedId = ThreadLocalRandom.current().nextLong(1_000_000_000L, 9_999_999_999L);
         String generatedId = UUID.randomUUID().toString();
+        printHashUserId(generatedId, dto.getUsername());
         user.setUserId(generatedId);
         user.setEmail(dto.getEmail());
         user.setUsername(dto.getUsername());
         return user;
+    }
+
+    private void printHashUserId(String userId, String username){
+        if (userId == null) {
+            System.err.println("Error: User ID cannot be null.");
+            return; // Exit the method if userId is null.
+        }
+        int userIdHash = Math.abs(userId.hashCode());
+        System.out.println("User ID Hash: " + userIdHash);
+        if (userIdHash % 2 == 0) {
+            // If the hash is even
+            System.out.println(username + " Masuk ke ds_0 (even hash)");
+        } else {
+            // If the hash is odd
+            System.out.println(username + " Masuk ke ds_1 (odd hash)");
+        }
     }
 
 }
