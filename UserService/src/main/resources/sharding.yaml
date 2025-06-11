@@ -13,7 +13,7 @@ dataSources:
   ds1:
     dataSourceClassName: com.zaxxer.hikari.HikariDataSource
     driverClassName: com.mysql.cj.jdbc.Driver
-    jdbcUrl: jdbc:mysql://mysql_ds1:3307/db_2?useSSL=false&allowPublicKeyRetrieval=true
+    jdbcUrl: jdbc:mysql://mysql_ds1:3306/db_2?useSSL=false&allowPublicKeyRetrieval=true
     username: root
     password: secret
 

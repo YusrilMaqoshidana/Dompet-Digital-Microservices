@@ -1,7 +1,7 @@
 services:
   user-service:
     build:
-        context: .
+        context: ./UserService
         dockerfile: Dockerfile
     image: user-service
     container_name: user-service
