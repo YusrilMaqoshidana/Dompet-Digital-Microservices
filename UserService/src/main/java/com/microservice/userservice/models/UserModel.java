@@ -1,28 +1,36 @@
 package com.microservice.userservice.models;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Data
 @Entity
 @NoArgsConstructor
-@Table(name = "t_user")
+@Table(name = "users")
 public class UserModel {
     @Id
-    @Column(name = "user_id")
-//    private Long userId;
+    @Column(name = "user_id", nullable = false)
     private String userId;
 
-    @Column(name = "username", nullable = false)
-    private String username;
+    @Column(name = "full_name", nullable = false)
+    private String fullName;
 
     @Column(name = "email", nullable = false)
     private String email;
+
+    @Column(name = "phone_number", nullable = false)
+    private String phoneNumber;
+
+    @Column(name = "password", nullable = false)
+    private String password;
+
+    @Column(name = "date_registered", nullable = false)
+    private LocalDateTime dateRegistered;
+
+    @Column(name = "is_active", nullable = false)
+    private boolean isActive;
 
 }

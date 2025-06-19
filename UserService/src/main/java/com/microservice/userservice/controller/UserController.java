@@ -2,7 +2,9 @@ package com.microservice.userservice.controller;
 
 
 import com.microservice.userservice.DTO.ApiResponse;
-import com.microservice.userservice.DTO.UserDTOResponse;
+import com.microservice.userservice.DTO.LoginDTOResponse;
+import com.microservice.userservice.DTO.ProfileDTOResponse;
+import com.microservice.userservice.DTO.RegisterDTOResponse;
 import com.microservice.userservice.models.UserModel;
 import com.microservice.userservice.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpServerErrorException;
 
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/users")
@@ -84,12 +85,12 @@ public class UserController {
     }
 
     // Post
-    @PostMapping
-    public ResponseEntity<ApiResponse<UserModel>> createUser(
-            @RequestBody UserDTOResponse newUser
+    @PostMapping("/register")
+    public ResponseEntity<ApiResponse<UserModel>> registerUser(
+            @RequestBody RegisterDTOResponse newUser
     ) {
         try{
-            UserModel user = userService.create(newUser);
+            UserModel user = userService.register(newUser);
             ApiResponse<UserModel> response = new ApiResponse<>(
                     HttpStatus.CREATED.value(),
                     "User created successfully",
@@ -106,13 +107,35 @@ public class UserController {
         }
     }
 
+    @PostMapping("/login")
+    public ResponseEntity<ApiResponse<Boolean>> registerUser(
+            @RequestBody LoginDTOResponse userLogin
+    ) {
+        try{
+            boolean isSuccesLogin = userService.login(userLogin);
+            ApiResponse<Boolean> response = new ApiResponse<>(
+                    HttpStatus.CREATED.value(),
+                    "User created successfully",
+                    isSuccesLogin
+            );
+            return new ResponseEntity<>(response, HttpStatus.CREATED);
+
+        } catch (Exception e) {
+            ApiResponse<Boolean> errorResponse = new ApiResponse<>(
+                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    "An error : " + e.getMessage()
+            );
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @PutMapping
-    public ResponseEntity<ApiResponse<UserModel>> updateUsername(
+    public ResponseEntity<ApiResponse<UserModel>> updateProfile(
             @RequestParam("user_id") String userId,
-            @RequestParam("username") String newName
+            @RequestBody ProfileDTOResponse newProfile
     ) {
         try {
-            UserModel users = userService.updateUsername(userId, newName);
+            UserModel users = userService.updateProfile(userId, newProfile);
             ApiResponse<UserModel> response = new ApiResponse<>(
                     HttpStatus.OK.value(),
                     "Successfully get detail users",
@@ -120,39 +143,11 @@ public class UserController {
             );
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
-
             ApiResponse<UserModel> errorResponse = new ApiResponse<>(
                     HttpStatus.INTERNAL_SERVER_ERROR.value(),
                     "An error occurred while fetching users. %s." + e.getMessage()
             );
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @DeleteMapping
-    public ResponseEntity<ApiResponse<Void>> deleteUser(
-            @RequestParam("user_id") String userId
-    ) {
-        try {
-            userService.delete(userId);
-
-            ApiResponse<Void> response = new ApiResponse<>(
-                    HttpStatus.OK.value(),
-                    "User successfully deleted"
-            );
-            return ResponseEntity.ok(response);
-        } catch (HttpServerErrorException e) {
-            ApiResponse<Void> error = new ApiResponse<>(
-                    e.getStatusCode().value(),
-                    "User deletion failed due to an external service error. Details: " + e.getResponseBodyAsString() // Hati-hati
-            );
-            return new ResponseEntity<>(error, e.getStatusCode());
-        } catch (Exception e) {
-            ApiResponse<Void> error = new ApiResponse<>(
-                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                    e.getMessage()
-            );
-            return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

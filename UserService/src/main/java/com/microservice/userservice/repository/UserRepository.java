@@ -10,5 +10,5 @@ import java.util.UUID;
 @Repository
 public interface UserRepository extends JpaRepository<UserModel, String> {
     UserModel getUserModelByUserId(String id);
-//    UserModel getUserModelByUserId(UUID id);
+    UserModel findByEmailAndPassword(String email, String password);
 }

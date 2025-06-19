@@ -3,7 +3,9 @@ package com.microservice.userservice.DTO;
 import lombok.Data;
 
 @Data
-public class UserDTOResponse{
+public class RegisterDTOResponse{
+    public String fullName;
     public String email;
-    public String username;
+    public String phoneNumber;
+    public String password;
 }
