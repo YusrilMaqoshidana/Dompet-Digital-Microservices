@@ -44,6 +44,7 @@ public class TransactionService {
         String generatedId = UUID.randomUUID().toString();
         printHashTransactionId(generatedId, dto.getTransactionName());
         transaction.setTransactionId(generatedId);
+        transaction.setTransactionName(dto.getTransactionName());
         transaction.setNominal(dto.getNominal());
         transaction.setStatus(dto.isStatus());
         return transaction;

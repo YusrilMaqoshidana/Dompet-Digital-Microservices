@@ -18,6 +18,8 @@ public class UserService {
 
     private final UserRepository userRepository;
 
+    private final UserPublisherService userPublisherService;
+
     public List<UserModel> getAll() {
         return userRepository.findAll();
     }
@@ -42,6 +44,8 @@ public class UserService {
     }
     public UserModel register(RegisterDTOResponse newUser) {
         UserModel user = toUserModel(newUser);
+//        mengirim user_id ke topic user.created
+        userPublisherService.publishUserCreatedEvent(user);
         return userRepository.save(user);
     }
 
