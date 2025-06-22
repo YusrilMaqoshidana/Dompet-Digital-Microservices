@@ -8,7 +8,7 @@ RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /walletservice ./cmd/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /topupservice ./cmd/main.go
 
 
 # --- Final Stage ---
@@ -16,8 +16,8 @@ FROM alpine:latest
 
 WORKDIR /root/
 
-COPY --from=builder /walletservice .
+COPY --from=builder /topupservice .
 
 EXPOSE 8081
 
-CMD ["./walletservice"]
+CMD ["./topupservice"]

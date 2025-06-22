@@ -53,5 +53,22 @@ services:
       - postgres
       - kafka
 
+  topup-service:
+    build: .
+    container_name: topup-service
+    ports:
+      - "8082:8082"
+    environment:
+      DATABASE_URL: postgres://user:password@postgres:5434/onepay_db?sslmode=disable
+      KAFKA_BROKERS: kafka:29092
+      KAFKA_TOPIC_TOPUP_SUCCESS: onepay.topup.success
+      KAFKA_TOPIC_TOPUP_FAILED: onepay.topup.failed
+      APP_PORT: 8082
+    depends_on:
+      postgres:
+        condition: service_started
+      kafka:
+        condition: service_healthy
+
 volumes:
   postgres_data:

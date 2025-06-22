@@ -1,4 +1,3 @@
-// pkg/kafka/producer.go
 package kafka
 
 import (
@@ -20,7 +19,7 @@ func NewProducer() *Producer {
 	writer := &kafka.Writer{
 		Addr:         kafka.TCP(brokers...),
 		Balancer:     &kafka.LeastBytes{},
-		RequiredAcks: kafka.RequireAll, // Menjamin pesan sampai ke semua replica
+		RequiredAcks: kafka.RequireAll,
 		WriteTimeout: 10 * time.Second,
 		ReadTimeout:  10 * time.Second,
 	}

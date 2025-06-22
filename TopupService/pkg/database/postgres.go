@@ -1,9 +1,9 @@
 package database
 
 import (
-	"dompet-digital-microservice/internal/wallet"
 	"log"
 	"os"
+	"topup-service/internal/topup"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -20,7 +20,7 @@ func NewGormDB() *gorm.DB {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
-	err = db.AutoMigrate(&wallet.Wallet{})
+	err = db.AutoMigrate(&topup.Topup{})
 	if err != nil {
 		log.Fatalf("Failed to auto-migrate database: %v", err)
 	}
