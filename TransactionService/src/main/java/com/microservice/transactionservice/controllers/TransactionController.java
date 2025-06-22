@@ -95,6 +95,7 @@ public class TransactionController {
     ) {
         try{
             TransactionModel transaction = transactionService.create(newTransaction);
+
             ApiResponse<TransactionModel> response = new ApiResponse<>(
                     HttpStatus.CREATED.value(),
                     "Transaction created successfully",
@@ -108,56 +109,6 @@ public class TransactionController {
                     "An error : " + e.getMessage()
             );
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @PutMapping
-    public ResponseEntity<ApiResponse<TransactionModel>> updateStatus(
-            @RequestParam("user_id") String transactionId,
-            @RequestParam("status") boolean newStatus
-    ) {
-        try {
-            TransactionModel transactions = transactionService.updateStatus(transactionId, newStatus);
-            ApiResponse<TransactionModel> response = new ApiResponse<>(
-                    HttpStatus.OK.value(),
-                    "Successfully get detail transactions",
-                    transactions
-            );
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (Exception e) {
-
-            ApiResponse<TransactionModel> errorResponse = new ApiResponse<>(
-                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                    "An error occurred while fetching transactions. %s." + e.getMessage()
-            );
-            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @DeleteMapping
-    public ResponseEntity<ApiResponse<Void>> deleteTransaction(
-            @RequestParam("transaction_id") String transactionId
-    ) {
-        try {
-            transactionService.delete(transactionId);
-
-            ApiResponse<Void> response = new ApiResponse<>(
-                    HttpStatus.OK.value(),
-                    "User successfully deleted"
-            );
-            return ResponseEntity.ok(response);
-        } catch (HttpServerErrorException e) {
-            ApiResponse<Void> error = new ApiResponse<>(
-                    e.getStatusCode().value(),
-                    "Transaction deletion failed due to an external service error. Details: " + e.getResponseBodyAsString() // Hati-hati
-            );
-            return new ResponseEntity<>(error, e.getStatusCode());
-        } catch (Exception e) {
-            ApiResponse<Void> error = new ApiResponse<>(
-                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                    e.getMessage()
-            );
-            return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

@@ -5,10 +5,10 @@ import lombok.Data;
 
 @Data
 @Builder
-public class TransactionDTOResponse {
+public class TransferDTO {
     public String transactionId;
     public String senderUserId;
     public String receiverUserId;
-    public String description;
     public float amount;
+    public String reason;
 }
