@@ -56,7 +56,7 @@ services:
 
   ds0:
     image: mysql:8.0
-    container_name: mysql_ds0
+    container_name: user_db0
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: secret
@@ -64,7 +64,7 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - mysql_data_ds0:/var/lib/mysql
+      - user_db0_data:/var/lib/mysql
     networks:
       - onepay-networks
     healthcheck:
@@ -76,7 +76,7 @@ services:
 
   ds1:
     image: mysql:8.0
-    container_name: mysql_ds1
+    container_name: user_db1
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: secret
@@ -84,7 +84,7 @@ services:
     ports:
       - "3307:3306"
     volumes:
-      - mysql_data_ds1:/var/lib/mysql
+      - user_db1_data:/var/lib/mysql
     networks:
       - onepay-networks
     healthcheck:
@@ -96,7 +96,7 @@ services:
 
   postgresql-db-transactions:
     image: postgres:13
-    container_name: postgre_db_transactions
+    container_name: transaction_db0
     restart: always
     ports:
       - "5434:5432"
@@ -105,7 +105,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: transactions
     volumes:
-      - postgre_db_transactions:/var/lib/postgresql/data
+      - transaction_db0_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -141,9 +141,9 @@ services:
       start_period: 60s
 
 volumes:
-  mysql_data_ds0:
-  mysql_data_ds1:
-  postgre_db_transactions:
+  user_db0_data:
+  user_db1_data:
+  transaction_db0_data:
   kafka_data:
     driver: local
 

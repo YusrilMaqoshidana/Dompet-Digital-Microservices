@@ -8,13 +8,13 @@ dataSources:
   ds0:
     dataSourceClassName: com.zaxxer.hikari.HikariDataSource
     driverClassName: com.mysql.cj.jdbc.Driver
-    jdbcUrl: jdbc:mysql://mysql_ds0:3306/db_1?useSSL=false&allowPublicKeyRetrieval=true
+    jdbcUrl: jdbc:mysql://user_db0:3306/db_1?useSSL=false&allowPublicKeyRetrieval=true
     username: root
     password: secret
   ds1:
     dataSourceClassName: com.zaxxer.hikari.HikariDataSource
     driverClassName: com.mysql.cj.jdbc.Driver
-    jdbcUrl: jdbc:mysql://mysql_ds1:3306/db_2?useSSL=false&allowPublicKeyRetrieval=true
+    jdbcUrl: jdbc:mysql://user_db1:3306/db_2?useSSL=false&allowPublicKeyRetrieval=true
     username: root
     password: secret
 
