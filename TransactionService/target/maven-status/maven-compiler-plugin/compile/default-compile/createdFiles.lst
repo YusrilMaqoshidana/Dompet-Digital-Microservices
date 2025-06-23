@@ -1,6 +1,7 @@
 com/microservice/transactionservice/config/KafkaConsumerConfig.class
 com/microservice/transactionservice/models/TransactionModel.class
 com/microservice/transactionservice/kafka/TransactionConsumerService.class
+com/microservice/transactionservice/TransactionServiceApplication.class
 com/microservice/transactionservice/config/KafkaTopicConfig.class
 com/microservice/transactionservice/controllers/TransactionController.class
 com/microservice/transactionservice/kafka/TransactionPublisherService.class
