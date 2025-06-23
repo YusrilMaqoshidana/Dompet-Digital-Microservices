@@ -11,8 +11,8 @@ services:
     depends_on:
       - user-service
       - transaction-service
-      - wallet-service
-      - topup-service
+      # - wallet-service
+      # - topup-service
     networks:
       - onepay-networks
     healthcheck:
@@ -56,29 +56,29 @@ services:
     networks:
       - onepay-networks
 
-  wallet-service:
-    build:
-      context: ./WalletService
-      dockerfile: Dockerfile
-    container_name: wallet-service
-    ports:
-      - "8083:8081"
-    depends_on:
-      postgresql-db-wallet:
-        condition: service_healthy
-      broker:
-        condition: service_healthy
-    networks:
-      - onepay-networks
-    environment:
-      - DATABASE_URL=postgres://user:password@postgresql-db-wallet:5432/onepay_wallet_db?sslmode=disable
-      - KAFKA_BROKERS=broker:9092
-      - KAFKA_TOPIC_USER_CREATED=onepay.user.created
-      - KAFKA_TOPIC_TOPUP_SUCCESS=onepay.topup.success
-      - KAFKA_TOPIC_WALLET_UPDATED=onepay.wallet.updated
-      - KAFKA_CONSUMER_GROUP=wallet-service-group
-      - APP_PORT=8081
-    restart: unless-stopped
+  # wallet-service:
+  #   build:
+  #     context: ./WalletService
+  #     dockerfile: Dockerfile
+  #   container_name: wallet-service
+  #   ports:
+  #     - "8083:8081"
+  #   depends_on:
+  #     postgresql-db-wallet:
+  #       condition: service_healthy
+  #     broker:
+  #       condition: service_healthy
+  #   networks:
+  #     - onepay-networks
+  #   environment:
+  #     - DATABASE_URL=postgres://user:password@postgresql-db-wallet:5432/onepay_wallet_db?sslmode=disable
+  #     - KAFKA_BROKERS=broker:9092
+  #     - KAFKA_TOPIC_USER_CREATED=onepay.user.created
+  #     - KAFKA_TOPIC_TOPUP_SUCCESS=onepay.topup.success
+  #     - KAFKA_TOPIC_WALLET_UPDATED=onepay.wallet.updated
+  #     - KAFKA_CONSUMER_GROUP=wallet-service-group
+  #     - APP_PORT=8081
+  #   restart: unless-stopped
 
   topup-service:
     build:
