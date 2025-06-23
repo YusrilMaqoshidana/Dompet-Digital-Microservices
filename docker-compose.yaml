@@ -11,6 +11,8 @@ services:
     depends_on:
       - user-service
       - transaction-service
+      - wallet-service
+      - topup-service
     networks:
       - onepay-networks
     healthcheck:
@@ -53,6 +55,52 @@ services:
         condition: service_healthy
     networks:
       - onepay-networks
+
+  wallet-service:
+    build:
+      context: ./WalletService
+      dockerfile: Dockerfile
+    container_name: wallet-service
+    ports:
+      - "8083:8081"
+    depends_on:
+      postgresql-db-wallet:
+        condition: service_healthy
+      broker:
+        condition: service_healthy
+    networks:
+      - onepay-networks
+    environment:
+      - DATABASE_URL=postgres://user:password@postgresql-db-wallet:5432/onepay_wallet_db?sslmode=disable
+      - KAFKA_BROKERS=broker:9092
+      - KAFKA_TOPIC_USER_CREATED=onepay.user.created
+      - KAFKA_TOPIC_TOPUP_SUCCESS=onepay.topup.success
+      - KAFKA_TOPIC_WALLET_UPDATED=onepay.wallet.updated
+      - KAFKA_CONSUMER_GROUP=wallet-service-group
+      - APP_PORT=8081
+    restart: unless-stopped
+
+  topup-service:
+    build:
+      context: ./TopupService
+      dockerfile: Dockerfile
+    container_name: topup-service
+    ports:
+      - "8084:8082"
+    depends_on:
+      postgresql-db-wallet:
+        condition: service_healthy
+      broker:
+        condition: service_healthy
+    networks:
+      - onepay-networks
+    environment:
+      - DATABASE_URL=postgres://user:password@postgresql-db-wallet:5432/onepay_wallet_db?sslmode=disable
+      - KAFKA_BROKERS=broker:9092
+      - KAFKA_TOPIC_TOPUP_SUCCESS=onepay.topup.success
+      - KAFKA_TOPIC_TOPUP_FAILED=onepay.topup.failed
+      - APP_PORT=8082
+    restart: unless-stopped
 
   ds0:
     image: mysql:8.0
@@ -115,6 +163,27 @@ services:
     networks:
       - onepay-networks
 
+  postgresql-db-wallet:
+    image: postgres:14-alpine
+    container_name: wallet_db0
+    restart: always
+    ports:
+      - "5435:5432"
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=onepay_wallet_db
+    volumes:
+      - wallet_db0_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d onepay_wallet_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+    networks:
+      - onepay-networks
+
   broker:
     image: 'bitnami/kafka:latest'
     container_name: kafka-broker
@@ -144,6 +213,7 @@ volumes:
   user_db0_data:
   user_db1_data:
   transaction_db0_data:
+  wallet_db0_data:
   kafka_data:
     driver: local
 
