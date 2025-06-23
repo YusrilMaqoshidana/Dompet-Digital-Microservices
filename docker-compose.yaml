@@ -102,6 +102,30 @@ services:
       - APP_PORT=8082
     restart: unless-stopped
 
+  report-service:
+    build:
+      context: ./ReportService
+      dockerfile: Dockerfile
+    container_name: report-service
+    ports:
+      - "8085:8085"
+    depends_on:
+      postgresql-db-report:
+        condition: service_healthy
+      broker:
+        condition: service_healthy
+    networks:
+      - onepay-networks
+    environment:
+      - DATABASE_URL=postgres://user:password@postgresql-db-report:5432/onepay_report_db?sslmode=disable
+      - KAFKA_BROKERS=broker:9092
+      - KAFKA_TOPIC_TOPUP_SUCCESS=onepay.topup.success
+      - KAFKA_TOPIC_TOPUP_FAILED=onepay.topup.failed
+      - KAFKA_TOPIC_TRANSACTION_SUCCESS=onepay.transaction.success
+      - KAFKA_TOPIC_TRANSACTION_FAILED=onepay.transaction.failed
+      - APP_PORT=8085
+    restart: unless-stopped
+
   ds0:
     image: mysql:8.0
     container_name: user_db0
@@ -184,6 +208,27 @@ services:
     networks:
       - onepay-networks
 
+  postgresql-db-report:
+    image: postgres:14-alpine
+    container_name: report_db0
+    restart: always
+    ports:
+      - "5436:5432"
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=onepay_report_db
+    volumes:
+      - report_db0_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d onepay_report_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+    networks:
+      - onepay-networks
+
   broker:
     image: 'bitnami/kafka:latest'
     container_name: kafka-broker
@@ -214,6 +259,7 @@ volumes:
   user_db1_data:
   transaction_db0_data:
   wallet_db0_data:
+  report_db0_data:
   kafka_data:
     driver: local
 
