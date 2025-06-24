@@ -1,4 +1,3 @@
-// pkg/kafka/consumer.go
 package kafka
 
 import (
@@ -18,8 +17,8 @@ func NewConsumer(topic, groupID string) *kafka.Reader {
 		Brokers:  brokers,
 		GroupID:  groupID,
 		Topic:    topic,
-		MinBytes: 10e3, // 10KB
-		MaxBytes: 10e6, // 10MB
+		MinBytes: 10e3,
+		MaxBytes: 10e6,
 	})
 }
 
@@ -34,24 +33,22 @@ func ConsumeUserCreatedEvents(ctx context.Context, service wallet.Service) {
 		msg, err := reader.ReadMessage(ctx)
 		if err != nil {
 			log.Printf("ERROR - could not read message from %s: %v", topic, err)
-			break // Keluar dari loop jika ada error fatal
+			break
 		}
 
 		var event wallet.UserCreatedEvent
 		if err := json.Unmarshal(msg.Value, &event); err != nil {
 			log.Printf("ERROR - failed to unmarshal UserCreatedEvent: %v", err)
-			continue // Lanjut ke pesan berikutnya
+			continue
 		}
 
 		if err := service.HandleUserCreated(ctx, event); err != nil {
 			log.Printf("ERROR - failed to handle UserCreatedEvent: %v", err)
-			// Di sini bisa ditambahkan mekanisme dead-letter-queue jika diperlukan
 		}
 	}
 }
 
 func ConsumeTopupSuccessEvents(ctx context.Context, service wallet.Service) {
-    // Mirip dengan ConsumeUserCreatedEvents, tapi untuk event TopupSuccess
     topic := os.Getenv("KAFKA_TOPIC_TOPUP_SUCCESS")
     groupID := os.Getenv("KAFKA_CONSUMER_GROUP")
     reader := NewConsumer(topic, groupID)
