@@ -6,7 +6,6 @@ import lombok.Data;
 @Data
 @Builder
 public class TransactionDTOResponse {
-    public String transactionId;
     public String senderUserId;
     public String receiverUserId;
     public String description;

@@ -39,11 +39,11 @@ public class TransactionService {
         }
     }
 
-
     public TransactionModel create(TransactionDTOResponse newTransaction) {
-        TransactionModel transaction = toTransactionModel(newTransaction);
+        String generatedId = UUID.randomUUID().toString();
+        TransactionModel transaction = toTransactionModel(newTransaction, generatedId);
         TransferDTO dataTransfer = TransferDTO.builder()
-                .transactionId(newTransaction.getTransactionId())
+                .transactionId(generatedId)
                 .senderUserId(newTransaction.getSenderUserId())
                 .receiverUserId(newTransaction.getReceiverUserId())
                 .amount(newTransaction.getAmount())
@@ -53,11 +53,11 @@ public class TransactionService {
         return transactionRepository.save(transaction);
     }
 
-    private TransactionModel toTransactionModel(TransactionDTOResponse dto) {
+    private TransactionModel toTransactionModel(TransactionDTOResponse dto, String transactionId) {
         TransactionModel transaction = new TransactionModel();
-        String generatedId = UUID.randomUUID().toString();
+
         String createdAt = LocalDateTime.now().toString();
-        transaction.setTransactionId(generatedId);
+        transaction.setTransactionId(transactionId);
         transaction.setSenderUserId(dto.getSenderUserId());
         transaction.setReceiverUserId(dto.getReceiverUserId());
         transaction.setAmount(dto.getAmount());
