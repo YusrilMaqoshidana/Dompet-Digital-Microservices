@@ -9,5 +9,5 @@ import java.time.Instant;
 @Builder // Berguna untuk membuat instance yang mudah
 public class UserCreatedEvent {
     private String userId;
-    private Instant createdAt;
+    private String createdAt;
 }

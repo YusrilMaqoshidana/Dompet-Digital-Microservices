@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -22,12 +21,11 @@ func (h *Handler) RegisterRoutes(router *gin.Engine) {
 }
 
 func (h *Handler) GetWalletByUserID(c *gin.Context) {
-	userIDStr := c.Param("userID")
-	userID, err := uuid.Parse(userIDStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid User ID format"})
-		return
-	}
+	userID := c.Param("userID")
+	// if err != nil {
+	// 	c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid User ID format"})
+	// 	return
+	// }
 
 	wallet, err := h.service.FindWalletByUserID(c.Request.Context(), userID)
 	if err != nil {

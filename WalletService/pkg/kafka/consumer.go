@@ -4,7 +4,7 @@ import (
 	"context"
 	"dompet-digital-microservice/internal/wallet"
 	"encoding/json"
-	"log"
+	"fmt"
 	"os"
 	"strings"
 
@@ -28,22 +28,22 @@ func ConsumeUserCreatedEvents(ctx context.Context, service wallet.Service) {
 	reader := NewConsumer(topic, groupID)
 	defer reader.Close()
 
-	log.Printf("Starting consumer for topic: %s", topic)
+	fmt.Printf("Starting consumer for topic: %s", topic)
 	for {
 		msg, err := reader.ReadMessage(ctx)
 		if err != nil {
-			log.Printf("ERROR - could not read message from %s: %v", topic, err)
+			fmt.Printf("ERROR - could not read message from %s: %v", topic, err)
 			break
 		}
 
 		var event wallet.UserCreatedEvent
 		if err := json.Unmarshal(msg.Value, &event); err != nil {
-			log.Printf("ERROR - failed to unmarshal UserCreatedEvent: %v", err)
+			fmt.Printf("ERROR - failed to unmarshal UserCreatedEvent: %v", err)
 			continue
 		}
 
 		if err := service.HandleUserCreated(ctx, event); err != nil {
-			log.Printf("ERROR - failed to handle UserCreatedEvent: %v", err)
+			fmt.Printf("ERROR - failed to handle UserCreatedEvent: %v", err)
 		}
 	}
 }
@@ -54,22 +54,22 @@ func ConsumeTopupSuccessEvents(ctx context.Context, service wallet.Service) {
     reader := NewConsumer(topic, groupID)
     defer reader.Close()
 
-    log.Printf("Starting consumer for topic: %s", topic)
+    fmt.Printf("Starting consumer for topic: %s", topic)
     for {
         msg, err := reader.ReadMessage(ctx)
         if err != nil {
-            log.Printf("ERROR - could not read message from %s: %v", topic, err)
+            fmt.Printf("ERROR - could not read message from %s: %v", topic, err)
             break
         }
 
         var event wallet.TopupSuccessEvent
         if err := json.Unmarshal(msg.Value, &event); err != nil {
-            log.Printf("ERROR - failed to unmarshal TopupSuccessEvent: %v", err)
+            fmt.Printf("ERROR - failed to unmarshal TopupSuccessEvent: %v", err)
             continue
         }
 
         if err := service.HandleTopupSuccess(ctx, event); err != nil {
-            log.Printf("ERROR - failed to handle TopupSuccessEvent: %v", err)
+            fmt.Printf("ERROR - failed to handle TopupSuccessEvent: %v", err)
         }
     }
 }

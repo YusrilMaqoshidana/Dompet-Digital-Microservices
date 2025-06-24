@@ -35,6 +35,8 @@ services:
         condition: service_healthy
       ds1:
         condition: service_healthy
+      # ds2:
+      #   condition: service_healthy
       broker:
         condition: service_healthy
     networks:
@@ -72,7 +74,7 @@ services:
       - onepay-networks
     environment:
       - DATABASE_URL=postgres://user:password@postgresql-db-wallet:5432/onepay_wallet_db?sslmode=disable
-      - KAFKA_BROKERS=kafka-broker:9092
+      - KAFKA_BROKERS=broker:9092
       - KAFKA_TOPIC_USER_CREATED=user.created
       - KAFKA_TOPIC_TOPUP_SUCCESS=topup.success
       - KAFKA_TOPIC_WALLET_UPDATED=wallet.updated
@@ -142,6 +144,27 @@ services:
       timeout: 3s
       retries: 10
       start_period: 30s
+  
+  # ds2:
+  #   image: postgres:13
+  #   container_name: user_db2
+  #   restart: always
+  #   ports:
+  #     - "5436:5432"
+  #   environment:
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_PASSWORD: secret
+  #     POSTGRES_DB: db_3
+  #   volumes:
+  #     -  user_db2_data:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U postgres"]
+  #     interval: 5s
+  #     timeout: 3s
+  #     retries: 10
+  #     start_period: 30s
+  #   networks:
+  #     - onepay-networks
 
   postgresql-db-transactions:
     image: postgres:13
@@ -213,6 +236,7 @@ services:
 volumes:
   user_db0_data:
   user_db1_data:
+  user_db2_data:
   transaction_db0_data:
   wallet_db0_data:
   kafka_data:

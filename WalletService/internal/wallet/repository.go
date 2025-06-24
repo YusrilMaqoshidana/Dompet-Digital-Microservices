@@ -4,15 +4,14 @@ import (
 	"context"
 	"errors"
 
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
 type Repository interface {
 	CreateWallet(ctx context.Context, wallet *Wallet) error
-	GetWalletByUserID(ctx context.Context, userID uuid.UUID) (*Wallet, error)
-	CreditBalance(ctx context.Context, userID uuid.UUID, amount float64) (*Wallet, error)
+	GetWalletByUserID(ctx context.Context, userID string) (*Wallet, error)
+	CreditBalance(ctx context.Context, userID string, amount float64) (*Wallet, error)
 }
 
 type repository struct {
@@ -28,7 +27,7 @@ func (r *repository) CreateWallet(ctx context.Context, wallet *Wallet) error {
 	return result.Error
 }
 
-func (r *repository) GetWalletByUserID(ctx context.Context, userID uuid.UUID) (*Wallet, error) {
+func (r *repository) GetWalletByUserID(ctx context.Context, userID string) (*Wallet, error) {
 	var wallet Wallet
 	result := r.db.WithContext(ctx).Where("user_id = ?", userID).First(&wallet)
 
@@ -41,7 +40,7 @@ func (r *repository) GetWalletByUserID(ctx context.Context, userID uuid.UUID) (*
 	return &wallet, nil
 }
 
-func (r *repository) CreditBalance(ctx context.Context, userID uuid.UUID, amount float64) (*Wallet, error) {
+func (r *repository) CreditBalance(ctx context.Context, userID string, amount float64) (*Wallet, error) {
 	result := r.db.WithContext(ctx).Model(&Wallet{}).
 		Clauses(clause.Returning{}).
 		Where("user_id = ?", userID).

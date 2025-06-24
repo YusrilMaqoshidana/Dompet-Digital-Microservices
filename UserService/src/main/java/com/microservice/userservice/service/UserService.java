@@ -54,7 +54,7 @@ public class UserService {
         String generatedId = UUID.randomUUID().toString();
         LocalDateTime now = LocalDateTime.now();
         String hashPassword = String.valueOf(dto.getPassword().hashCode());
-//        printHashUserId(generatedId, dto.getUsername());
+        printHashUserId(generatedId, dto.getFullName());
         user.setUserId(generatedId);
         user.setEmail(dto.getEmail());
         user.setFullName(dto.getFullName());
@@ -71,20 +71,20 @@ public class UserService {
         return userRepository.save(user);
     }
 
-//    private void printHashUserId(String userId, String username){
-//        if (userId == null) {
-//            System.err.println("Error: User ID cannot be null.");
-//            return; // Exit the method if userId is null.
-//        }
-//        int userIdHash = Math.abs(userId.hashCode());
-//        System.out.println("User ID Hash: " + userIdHash);
-//        if (userIdHash % 2 == 0) {
-//            // If the hash is even
-//            System.out.println(username + " Masuk ke ds_0 (even hash)");
-//        } else {
-//            // If the hash is odd
-//            System.out.println(username + " Masuk ke ds_1 (odd hash)");
-//        }
-//    }
+    private void printHashUserId(String userId, String username){
+       if (userId == null) {
+           System.err.println("Error: User ID cannot be null.");
+           return; // Exit the method if userId is null.
+       }
+       int userIdHash = Math.abs(userId.hashCode());
+       System.out.println("User ID Hash: " + userIdHash);
+       if (userIdHash % 2 == 0) {
+           // If the hash is even
+           System.out.println(username + " Masuk ke ds_0 (even hash)");
+       } else {
+           // If the hash is odd
+           System.out.println(username + " Masuk ke ds_1 (odd hash)");
+       }
+   }
 
 }

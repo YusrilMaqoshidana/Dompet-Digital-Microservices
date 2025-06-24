@@ -25,7 +25,7 @@ public class UserPublisherService {
     public void publishUserCreatedEvent(UserModel userModel) {
         UserCreatedEvent event = UserCreatedEvent.builder()
                 .userId(userModel.getUserId())
-                .createdAt(Instant.now())
+                .createdAt(Instant.now().toString())
                 .build();
         CompletableFuture<SendResult<String, UserCreatedEvent>> future =
                 kafkaTemplate.send(topicName, event.getUserId(), event);

@@ -8,15 +8,21 @@ dataSources:
   ds0:
     dataSourceClassName: com.zaxxer.hikari.HikariDataSource
     driverClassName: com.mysql.cj.jdbc.Driver
-    jdbcUrl: jdbc:mysql://user_db0:3306/db_1?useSSL=false&allowPublicKeyRetrieval=true
+    jdbcUrl: jdbc:mysql://ds0:3306/db_1?useSSL=false&allowPublicKeyRetrieval=true
     username: root
     password: secret
   ds1:
     dataSourceClassName: com.zaxxer.hikari.HikariDataSource
     driverClassName: com.mysql.cj.jdbc.Driver
-    jdbcUrl: jdbc:mysql://user_db1:3306/db_2?useSSL=false&allowPublicKeyRetrieval=true
+    jdbcUrl: jdbc:mysql://ds1:3306/db_2?useSSL=false&allowPublicKeyRetrieval=true
     username: root
     password: secret
+#  ds2:
+#    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+#    driverClassName: org.postgresql.Driver
+#    jdbcUrl: jdbc:postgresql://ds2:5432/db_3
+#    username: postgres
+#    password: secret
 
 rules:
   - !SHARDING

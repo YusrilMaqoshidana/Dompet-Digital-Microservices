@@ -17,7 +17,7 @@ type Service interface {
 	HandleUserCreated(ctx context.Context, event UserCreatedEvent) error
 	HandleTopupSuccess(ctx context.Context, event TopupSuccessEvent) error
 
-	FindWalletByUserID(ctx context.Context, userID uuid.UUID) (*Wallet, error)
+	FindWalletByUserID(ctx context.Context, userID string) (*Wallet, error)
 }
 
 type service struct {
@@ -83,7 +83,7 @@ func (s *service) HandleTopupSuccess(ctx context.Context, event TopupSuccessEven
 		return err
 	}
 
-	err = s.producer.Publish(ctx, s.walletUpdatedTopic, []byte(updatedWallet.UserID.String()), eventBytes)
+	err = s.producer.Publish(ctx, s.walletUpdatedTopic, []byte(updatedWallet.UserID), eventBytes)
 	if err != nil {
 		log.Printf("ERROR - Failed to publish WalletUpdatedEvent: %v", err)
 	}
@@ -91,6 +91,6 @@ func (s *service) HandleTopupSuccess(ctx context.Context, event TopupSuccessEven
 	return nil
 }
 
-func (s *service) FindWalletByUserID(ctx context.Context, userID uuid.UUID) (*Wallet, error) {
+func (s *service) FindWalletByUserID(ctx context.Context, userID string) (*Wallet, error) {
 	return s.repo.GetWalletByUserID(ctx, userID)
 }
