@@ -60,27 +60,19 @@ services:
 
   wallet-service:
     build:
-      context: .
-      dockerfile: WalletService/Dockerfile
+      context: ./WalletService
+      dockerfile: Dockerfile
+    image: wallet-service
     container_name: wallet-service
     ports:
       - "8083:8083"
     depends_on:
-      postgresql-db-wallet:
+      wallet_db0:
         condition: service_healthy
       broker:
         condition: service_healthy
     networks:
       - onepay-networks
-    environment:
-      - DATABASE_URL=postgres://user:password@postgresql-db-wallet:5432/onepay_wallet_db?sslmode=disable
-      - KAFKA_BROKERS=broker:9092
-      - KAFKA_TOPIC_USER_CREATED=user.created
-      - KAFKA_TOPIC_TOPUP_SUCCESS=topup.success
-      - KAFKA_TOPIC_WALLET_UPDATED=wallet.updated
-      - KAFKA_CONSUMER_GROUP=wallet-service-group
-      - APP_PORT=8083
-    restart: unless-stopped
 
   # topup-service:
   #   build:
@@ -91,14 +83,14 @@ services:
   #   ports:
   #     - "8084:8084"
   #   depends_on:
-  #     postgresql-db-wallet:
+  #     wallet_db0:
   #       condition: service_healthy
   #     broker:
   #       condition: service_healthy
   #   networks:
   #     - onepay-networks
   #   environment:
-  #     - DATABASE_URL=postgres://user:password@postgresql-db-wallet:5432/onepay_wallet_db?sslmode=disable
+  #     - DATABASE_URL=postgres://user:password@wallet_db0:5432/onepay_wallet_db?sslmode=disable
   #     - KAFKA_BROKERS=kafka-broker:9092
   #     - KAFKA_TOPIC_TOPUP_SUCCESS=topup.success
   #     - KAFKA_TOPIC_TOPUP_FAILED=topup.failed
@@ -187,20 +179,20 @@ services:
     networks:
       - onepay-networks
 
-  postgresql-db-wallet:
+  wallet_db0:
     image: postgres:14-alpine
     container_name: wallet_db0
     restart: always
     ports:
       - "5435:5432"
     environment:
-      - POSTGRES_USER=user
+      - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=onepay_wallet_db
+      - POSTGRES_DB=wallet_db
     volumes:
       - wallet_db0_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d onepay_wallet_db"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 3s
       retries: 10
