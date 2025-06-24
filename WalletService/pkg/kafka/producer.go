@@ -1,40 +1,62 @@
-// pkg/kafka/producer.go
 package kafka
 
 import (
 	"context"
+	"log"
 	"os"
-	"strings"
-	"time"
 
-	"github.com/segmentio/kafka-go"
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
 
 type Producer struct {
-	writer *kafka.Writer
+	p *kafka.Producer
 }
 
 func NewProducer() *Producer {
-	brokers := strings.Split(os.Getenv("KAFKA_BROKERS"), ",")
-
-	writer := &kafka.Writer{
-		Addr:         kafka.TCP(brokers...),
-		Balancer:     &kafka.LeastBytes{},
-		RequiredAcks: kafka.RequireAll, // Menjamin pesan sampai ke semua replica
-		WriteTimeout: 10 * time.Second,
-		ReadTimeout:  10 * time.Second,
+	kafkaBrokers := os.Getenv("KAFKA_BROKERS")
+	if kafkaBrokers == "" {
+		log.Fatal("FATAL: KAFKA_BROKERS environment variable is not set!")
 	}
-	return &Producer{writer: writer}
+
+	p, err := kafka.NewProducer(&kafka.ConfigMap{"bootstrap.servers": kafkaBrokers})
+	if err != nil {
+		log.Fatalf("Failed to create Kafka producer: %s", err)
+	}
+
+	log.Println("INFO: Kafka producer created successfully")
+	return &Producer{p: p}
 }
 
 func (p *Producer) Publish(ctx context.Context, topic string, key []byte, value []byte) error {
-	return p.writer.WriteMessages(ctx, kafka.Message{
-		Topic: topic,
-		Key:   key,
-		Value: value,
-	})
+	deliveryChan := make(chan kafka.Event)
+	defer close(deliveryChan)
+
+	err := p.p.Produce(&kafka.Message{
+		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: int32(kafka.PartitionAny)},
+		Key:            key,
+		Value:          value,
+	}, deliveryChan)
+
+	if err != nil {
+		log.Printf("ERROR: Produce failed: %v\n", err)
+		return err
+	}
+
+	e := <-deliveryChan
+	m := e.(*kafka.Message)
+
+	if m.TopicPartition.Error != nil {
+		log.Printf("ERROR: Delivery failed: %v\n", m.TopicPartition.Error)
+		return m.TopicPartition.Error
+	}
+
+	log.Printf("INFO: Delivered message to topic %s [%d] at offset %v\n",
+		*m.TopicPartition.Topic, m.TopicPartition.Partition, m.TopicPartition.Offset)
+
+	return nil
 }
 
-func (p *Producer) Close() error {
-	return p.writer.Close()
+func (p *Producer) Close() {
+	p.p.Flush(15 * 1000)
+	p.p.Close()
 }

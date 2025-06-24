@@ -2,74 +2,66 @@ package kafka
 
 import (
 	"context"
-	"dompet-digital-microservice/internal/wallet"
-	"encoding/json"
-	"fmt"
+	"log"
 	"os"
-	"strings"
+	"sync"
+	"time"
 
-	"github.com/segmentio/kafka-go"
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
 
-func NewConsumer(topic, groupID string) *kafka.Reader {
-	brokers := strings.Split(os.Getenv("KAFKA_BROKERS"), ",")
-	return kafka.NewReader(kafka.ReaderConfig{
-		Brokers:  brokers,
-		GroupID:  groupID,
-		Topic:    topic,
-		MinBytes: 10e3,
-		MaxBytes: 10e6,
-	})
-}
+func StartConsumer(ctx context.Context, wg *sync.WaitGroup, topic string, groupID string, handlerFunc func(ctx context.Context, msg *kafka.Message) error) {
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
 
-func ConsumeUserCreatedEvents(ctx context.Context, service wallet.Service) {
-	topic := os.Getenv("KAFKA_TOPIC_USER_CREATED")
-	groupID := os.Getenv("KAFKA_CONSUMER_GROUP")
-	reader := NewConsumer(topic, groupID)
-	defer reader.Close()
+		kafkaBrokers := os.Getenv("KAFKA_BROKERS")
+		if kafkaBrokers == "" {
+			log.Fatalf("FATAL: KAFKA_BROKERS environment variable is not set!")
+		}
 
-	fmt.Printf("Starting consumer for topic: %s", topic)
-	for {
-		msg, err := reader.ReadMessage(ctx)
+		c, err := kafka.NewConsumer(&kafka.ConfigMap{
+			"bootstrap.servers":       kafkaBrokers,
+			"group.id":                groupID,
+			"auto.offset.reset":       "earliest",
+			"enable.auto.commit":      true,
+		})
+
 		if err != nil {
-			fmt.Printf("ERROR - could not read message from %s: %v", topic, err)
-			break
+			log.Fatalf("FATAL: Failed to create Kafka consumer: %v", err)
+		}
+		defer c.Close()
+
+		err = c.SubscribeTopics([]string{topic}, nil)
+		if err != nil {
+			log.Printf("FATAL: Failed to subscribe to topic %s: %v", topic, err)
+			return
 		}
 
-		var event wallet.UserCreatedEvent
-		if err := json.Unmarshal(msg.Value, &event); err != nil {
-			fmt.Printf("ERROR - failed to unmarshal UserCreatedEvent: %v", err)
-			continue
+		log.Printf("INFO: Kafka consumer started for topic [%s], group [%s]", topic, groupID)
+
+		run := true
+		for run {
+			select {
+			case <-ctx.Done():
+				log.Printf("INFO: Stopping consumer for topic: [%s]", topic)
+				run = false
+			default:
+				msg, err := c.ReadMessage(100 * time.Millisecond)
+
+				if err != nil {
+					if kafkaErr, ok := err.(kafka.Error); ok && kafkaErr.Code() == kafka.ErrTimedOut {
+						continue
+					}
+					log.Printf("ERROR: Consumer error on topic %s: %v\n", topic, err)
+					continue
+				}
+
+				log.Printf("INFO: Received message on topic %s: Partition %d, Offset %d", *msg.TopicPartition.Topic, msg.TopicPartition.Partition, msg.TopicPartition.Offset)
+				if handlerErr := handlerFunc(ctx, msg); handlerErr != nil {
+					log.Printf("ERROR: Failed to handle message from topic %s: %v", topic, handlerErr)
+				}
+			}
 		}
-
-		if err := service.HandleUserCreated(ctx, event); err != nil {
-			fmt.Printf("ERROR - failed to handle UserCreatedEvent: %v", err)
-		}
-	}
-}
-
-func ConsumeTopupSuccessEvents(ctx context.Context, service wallet.Service) {
-    topic := os.Getenv("KAFKA_TOPIC_TOPUP_SUCCESS")
-    groupID := os.Getenv("KAFKA_CONSUMER_GROUP")
-    reader := NewConsumer(topic, groupID)
-    defer reader.Close()
-
-    fmt.Printf("Starting consumer for topic: %s", topic)
-    for {
-        msg, err := reader.ReadMessage(ctx)
-        if err != nil {
-            fmt.Printf("ERROR - could not read message from %s: %v", topic, err)
-            break
-        }
-
-        var event wallet.TopupSuccessEvent
-        if err := json.Unmarshal(msg.Value, &event); err != nil {
-            fmt.Printf("ERROR - failed to unmarshal TopupSuccessEvent: %v", err)
-            continue
-        }
-
-        if err := service.HandleTopupSuccess(ctx, event); err != nil {
-            fmt.Printf("ERROR - failed to handle TopupSuccessEvent: %v", err)
-        }
-    }
+	}()
 }
