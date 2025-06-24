@@ -18,7 +18,7 @@ type Wallet struct {
 
 type UserCreatedEvent struct {
 	UserID    uuid.UUID `json:"userId"`
-	CreatedAt time.Time `json:"createdAt"`
+	CreatedAt string    `json:"createdAt"`
 }
 
 type TopupSuccessEvent struct {
