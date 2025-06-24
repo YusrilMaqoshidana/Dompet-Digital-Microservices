@@ -199,7 +199,7 @@ services:
       - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka-broker:9093
       - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
       - KAFKA_CFG_LOG_DIRS=/bitnami/kafka/data/kraft-combined-logs
-      - KAFKA_KRAFT_CLUSTER_ID=
+      - KAFKA_KRAFT_CLUSTER_ID=WDd1smWIQ-ChsMmr7OLvwQ
     volumes:
       - kafka_data:/bitnami/kafka
     healthcheck:
