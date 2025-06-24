@@ -18,7 +18,7 @@ func NewHandler(service Service) *Handler {
 }
 
 func (h *Handler) RegisterRoutes(router *gin.Engine) {
-	router.GET("api/wallets/:userID", h.GetWalletByUserID)
+	router.GET("/api/wallets/:userID", h.GetWalletByUserID)
 }
 
 func (h *Handler) GetWalletByUserID(c *gin.Context) {

@@ -12,7 +12,7 @@ services:
       - user-service
       - transaction-service
       - wallet-service
-      - topup-service
+      # - topup-service
     networks:
       - onepay-networks
     healthcheck:
@@ -80,27 +80,28 @@ services:
       - APP_PORT=8083
     restart: unless-stopped
 
-  topup-service:
-    build:
-      context: ./TopupService
-      dockerfile: Dockerfile
-    container_name: topup-service
-    ports:
-      - "8084:8084"
-    depends_on:
-      postgresql-db-wallet:
-        condition: service_healthy
-      broker:
-        condition: service_healthy
-    networks:
-      - onepay-networks
-    environment:
-      - DATABASE_URL=postgres://user:password@postgresql-db-wallet:5432/onepay_wallet_db?sslmode=disable
-      - KAFKA_BROKERS=kafka-broker:9092
-      - KAFKA_TOPIC_TOPUP_SUCCESS=topup.success
-      - KAFKA_TOPIC_TOPUP_FAILED=topup.failed
-      - APP_PORT=8084
-    restart: unless-stopped
+  # topup-service:
+  #   build:
+  #     context: ./TopupService
+  #     dockerfile: Dockerfile
+  #   # image: topup-service
+  #   container_name: topup-service
+  #   ports:
+  #     - "8084:8084"
+  #   depends_on:
+  #     postgresql-db-wallet:
+  #       condition: service_healthy
+  #     broker:
+  #       condition: service_healthy
+  #   networks:
+  #     - onepay-networks
+  #   environment:
+  #     - DATABASE_URL=postgres://user:password@postgresql-db-wallet:5432/onepay_wallet_db?sslmode=disable
+  #     - KAFKA_BROKERS=kafka-broker:9092
+  #     - KAFKA_TOPIC_TOPUP_SUCCESS=topup.success
+  #     - KAFKA_TOPIC_TOPUP_FAILED=topup.failed
+  #     - APP_PORT=8084
+  #   restart: unless-stopped
 
   ds0:
     image: mysql:8.0

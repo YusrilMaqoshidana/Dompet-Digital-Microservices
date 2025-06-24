@@ -30,7 +30,7 @@ func (r *repository) CreateWallet(ctx context.Context, wallet *Wallet) error {
 
 func (r *repository) GetWalletByUserID(ctx context.Context, userID uuid.UUID) (*Wallet, error) {
 	var wallet Wallet
-	result := r.db.WithContext(ctx).Where("user_id = ?", userID).First(&wallet)
+	result := r.db.WithContext(ctx).Where("userId = ?", userID).First(&wallet)
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
@@ -44,7 +44,7 @@ func (r *repository) GetWalletByUserID(ctx context.Context, userID uuid.UUID) (*
 func (r *repository) CreditBalance(ctx context.Context, userID uuid.UUID, amount float64) (*Wallet, error) {
 	result := r.db.WithContext(ctx).Model(&Wallet{}).
 		Clauses(clause.Returning{}).
-		Where("user_id = ?", userID).
+		Where("userId = ?", userID).
 		Update("balance", gorm.Expr("balance + ?", amount))
 
 	if result.Error != nil {
