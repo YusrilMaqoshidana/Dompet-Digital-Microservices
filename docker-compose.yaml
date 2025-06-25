@@ -12,7 +12,7 @@ services:
       - user-service
       - transaction-service
       - wallet-service
-      # - topup-service
+      - topup-service
     networks:
       - onepay-networks
     healthcheck:
@@ -82,28 +82,21 @@ services:
       - APP_PORT=8083
     restart: unless-stopped
 
-  # topup-service:
-  #   build:
-  #     context: ./TopupService
-  #     dockerfile: Dockerfile
-  #   # image: topup-service
-  #   container_name: topup-service
-  #   ports:
-  #     - "8084:8084"
-  #   depends_on:
-  #     postgresql-db-wallet:
-  #       condition: service_healthy
-  #     broker:
-  #       condition: service_healthy
-  #   networks:
-  #     - onepay-networks
-  #   environment:
-  #     - DATABASE_URL=postgres://user:password@postgresql-db-wallet:5432/onepay_wallet_db?sslmode=disable
-  #     - KAFKA_BROKERS=kafka-broker:9092
-  #     - KAFKA_TOPIC_TOPUP_SUCCESS=topup.success
-  #     - KAFKA_TOPIC_TOPUP_FAILED=topup.failed
-  #     - APP_PORT=8084
-  #   restart: unless-stopped
+  topup-service:
+    build:
+        context: ./TopupService
+        dockerfile: Dockerfile
+    image: topup-service
+    container_name: topup-service
+    ports:
+      - "8084:8084"
+    depends_on:
+      postgresql-db-topup:
+        condition: service_healthy
+      broker:
+        condition: service_healthy
+    networks:
+      - onepay-networks
 
   ds0:
     image: mysql:8.0
@@ -145,26 +138,26 @@ services:
       retries: 10
       start_period: 30s
   
-  # ds2:
-  #   image: postgres:13
-  #   container_name: user_db2
-  #   restart: always
-  #   ports:
-  #     - "5436:5432"
-  #   environment:
-  #     POSTGRES_USER: postgres
-  #     POSTGRES_PASSWORD: secret
-  #     POSTGRES_DB: db_3
-  #   volumes:
-  #     -  user_db2_data:/var/lib/postgresql/data
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "pg_isready -U postgres"]
-  #     interval: 5s
-  #     timeout: 3s
-  #     retries: 10
-  #     start_period: 30s
-  #   networks:
-  #     - onepay-networks
+  ds2:
+    image: postgres:13
+    container_name: user_db2
+    restart: always
+    ports:
+      - "5436:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: db_3
+    volumes:
+      -  user_db2_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+    networks:
+      - onepay-networks
 
   postgresql-db-transactions:
     image: postgres:13
@@ -178,6 +171,27 @@ services:
       POSTGRES_DB: transactions
     volumes:
       - transaction_db0_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+    networks:
+      - onepay-networks
+
+  postgresql-db-topup:
+    image: postgres:14-alpine
+    container_name: topup_db0
+    restart: always
+    ports:
+      - "5435:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: topup
+    volumes:
+      - topup_db0_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -239,6 +253,7 @@ volumes:
   user_db2_data:
   transaction_db0_data:
   wallet_db0_data:
+  topup_db0_data:
   kafka_data:
     driver: local
 
