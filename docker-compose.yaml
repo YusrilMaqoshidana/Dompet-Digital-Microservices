@@ -5,18 +5,22 @@ services:
     image: nginx:latest
     container_name: api-gateway-nginx
     ports:
-      - "8080:80" 
+      - "8080:80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
-      - user-service
-      - transaction-service
-      - wallet-service
-      # - topup-service
+      user-service:
+        condition: service_healthy
+      transaction-service:
+        condition: service_healthy
+      wallet-service:
+        condition: service_healthy
+      topup-service:
+        condition: service_healthy
     networks:
       - onepay-networks
     healthcheck:
-      test: ["CMD-SHELL", "nginx -t && nginx -s reload"]
+      test: ["CMD-SHELL", "nginx -t"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -24,32 +28,41 @@ services:
 
   user-service:
     build:
-        context: ./UserService
-        dockerfile: Dockerfile
-    image: user-service
+      context: ./UserService
+      dockerfile: Dockerfile
     container_name: user-service
     ports:
       - "8081:8081"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://ds0:3306/db_1
+      - SPRING_DATASOURCE_URL_2=jdbc:mysql://ds1:3306/db_2 # Contoh jika ada datasource kedua
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=broker:9092
     depends_on:
       ds0:
         condition: service_healthy
       ds1:
         condition: service_healthy
-      # ds2:
-      #   condition: service_healthy
       broker:
         condition: service_healthy
     networks:
       - onepay-networks
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   transaction-service:
     build:
-        context: ./TransactionService
-        dockerfile: Dockerfile
-    image: transaction-service
+      context: ./TransactionService
+      dockerfile: Dockerfile
     container_name: transaction-service
     ports:
       - "8082:8082"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgresql-db-transactions:5432/transactions
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=broker:9092
     depends_on:
       postgresql-db-transactions:
         condition: service_healthy
@@ -57,15 +70,23 @@ services:
         condition: service_healthy
     networks:
       - onepay-networks
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   wallet-service:
     build:
       context: ./WalletService
       dockerfile: Dockerfile
-    image: wallet-service
     container_name: wallet-service
     ports:
       - "8083:8083"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://wallet_db0:5432/wallet_db
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=broker:9092
     depends_on:
       wallet_db0:
         condition: service_healthy
@@ -73,29 +94,37 @@ services:
         condition: service_healthy
     networks:
       - onepay-networks
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
-  # topup-service:
-  #   build:
-  #     context: ./TopupService
-  #     dockerfile: Dockerfile
-  #   # image: topup-service
-  #   container_name: topup-service
-  #   ports:
-  #     - "8084:8084"
-  #   depends_on:
-  #     wallet_db0:
-  #       condition: service_healthy
-  #     broker:
-  #       condition: service_healthy
-  #   networks:
-  #     - onepay-networks
-  #   environment:
-  #     - DATABASE_URL=postgres://user:password@wallet_db0:5432/onepay_wallet_db?sslmode=disable
-  #     - KAFKA_BROKERS=kafka-broker:9092
-  #     - KAFKA_TOPIC_TOPUP_SUCCESS=topup.success
-  #     - KAFKA_TOPIC_TOPUP_FAILED=topup.failed
-  #     - APP_PORT=8084
-  #   restart: unless-stopped
+  topup-service:
+    build:
+      context: ./TopupService
+      dockerfile: Dockerfile
+    container_name: topup-service
+    ports:
+      - "8084:8084"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://wallet_db0:5432/wallet_db
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=broker:9092
+    depends_on:
+      wallet_db0:
+        condition: service_healthy
+      broker:
+        condition: service_healthy
+    networks:
+      - onepay-networks
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8084/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
 
   ds0:
     image: mysql:8.0
