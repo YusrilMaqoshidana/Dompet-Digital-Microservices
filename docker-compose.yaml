@@ -17,6 +17,8 @@ services:
         condition: service_healthy
       topup-service:
         condition: service_healthy
+      report-service:
+        condition: service_healthy
     networks:
       - onepay-networks
     healthcheck:
@@ -33,10 +35,6 @@ services:
     container_name: user-service
     ports:
       - "8081:8081"
-    environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://ds0:3306/db_1
-      - SPRING_DATASOURCE_URL_2=jdbc:mysql://ds1:3306/db_2 # Contoh jika ada datasource kedua
-      - SPRING_KAFKA_BOOTSTRAP_SERVERS=broker:9092
     depends_on:
       ds0:
         condition: service_healthy
@@ -48,10 +46,9 @@ services:
       - onepay-networks
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
-      interval: 15s
+      interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
 
   transaction-service:
     build:
@@ -60,11 +57,10 @@ services:
     container_name: transaction-service
     ports:
       - "8082:8082"
-    environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgresql-db-transactions:5432/transactions
-      - SPRING_KAFKA_BOOTSTRAP_SERVERS=broker:9092
     depends_on:
       postgresql-db-transactions:
+        condition: service_healthy
+      user-service:
         condition: service_healthy
       broker:
         condition: service_healthy
@@ -72,10 +68,9 @@ services:
       - onepay-networks
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
-      interval: 15s
+      interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
 
   wallet-service:
     build:
@@ -84,11 +79,10 @@ services:
     container_name: wallet-service
     ports:
       - "8083:8083"
-    environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://wallet_db0:5432/wallet_db
-      - SPRING_KAFKA_BOOTSTRAP_SERVERS=broker:9092
     depends_on:
       wallet_db0:
+        condition: service_healthy
+      transaction-service:
         condition: service_healthy
       broker:
         condition: service_healthy
@@ -96,10 +90,9 @@ services:
       - onepay-networks
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
-      interval: 15s
+      interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
 
   topup-service:
     build:
@@ -108,11 +101,10 @@ services:
     container_name: topup-service
     ports:
       - "8084:8084"
-    environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://wallet_db0:5432/wallet_db
-      - SPRING_KAFKA_BOOTSTRAP_SERVERS=broker:9092
     depends_on:
-      wallet_db0:
+      topup_db0:
+        condition: service_healthy
+      wallet-service:
         condition: service_healthy
       broker:
         condition: service_healthy
@@ -120,21 +112,39 @@ services:
       - onepay-networks
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8084/actuator/health"]
-      interval: 15s
+      interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
 
+  report-service:
+    build:
+      context: ./ReportService
+      dockerfile: Dockerfile
+    container_name: report-service
+    ports:
+      - "8085:8085"
+    depends_on:
+      report_db0:
+        condition: service_healthy
+      topup-service:
+        condition: service_healthy
+      broker:
+        condition: service_healthy
+    networks:
+      - onepay-networks
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8085/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   ds0:
     image: mysql:8.0
     container_name: user_db0
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: secret 
       MYSQL_DATABASE: db_1
-    ports:
-      - "3306:3306"
     volumes:
       - user_db0_data:/var/lib/mysql
     networks:
@@ -229,6 +239,48 @@ services:
     networks:
       - onepay-networks
 
+  topup_db0:
+    image: postgres:14-alpine
+    container_name: topup_db0
+    restart: always
+    ports:
+      - "5436:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=topup_db
+    volumes:
+      - topup_db0_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+    networks:
+      - onepay-networks
+
+  report_db0:
+    image: postgres:14-alpine
+    container_name: report_db0
+    restart: always
+    ports:
+      - "5437:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=report_db
+    volumes:
+      - report_db0_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+    networks:
+      - onepay-networks
+
   broker:
     image: 'bitnami/kafka:latest'
     container_name: kafka-broker
@@ -260,6 +312,8 @@ volumes:
   user_db2_data:
   transaction_db0_data:
   wallet_db0_data:
+  topup_db0_data:
+  report_db0_data:
   kafka_data:
     driver: local
 

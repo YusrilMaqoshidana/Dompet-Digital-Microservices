@@ -25,11 +25,11 @@ public class KafkaTopicConfig {
     @Value(value = "${app.kafka.transfer-failed}")
     private String transferFailedTopic;
 
-    @Value(value = "${app.kafka.add-receiver-balance}")
-    private String addReceiverBalanceTopic;
+    @Value(value = "${topic.kafka.wallet-transfer-success}")
+    private String walletTransferSuccessTopic;
 
-    @Value(value = "${app.kafka.revert-sender-balance}")
-    private String revertSenderBalanceTopic;
+    @Value(value = "${topic.kafka.wallet-transfer-failed}")
+    private String walletTransferFailedTopic;
 
     @Bean
     public KafkaAdmin kafkaAdmin() {
@@ -54,12 +54,13 @@ public class KafkaTopicConfig {
     }
 
     @Bean
-    public NewTopic addReceiverBalance() {
-        return new NewTopic(addReceiverBalanceTopic, 2, (short) 1);
+    public NewTopic transactionSuccess() {
+        return new NewTopic(walletTransferSuccessTopic, 2, (short) 1);
     }
 
     @Bean
-    public NewTopic revertSenderBalance() {
-        return new NewTopic(revertSenderBalanceTopic, 2, (short) 1);
+    public NewTopic transactionFailed() {
+        return new NewTopic(walletTransferFailedTopic, 2, (short) 1);
     }
+
 }

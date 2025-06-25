@@ -1,6 +1,8 @@
 package com.microservice.transactionservice.config;
 
-import com.microservice.transactionservice.DTO.TransferDTO;
+import com.microservice.transactionservice.DTO.TransferInitiatedEvent;
+import com.microservice.transactionservice.DTO.WalletUpdateResultEvent;
+import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,37 +18,41 @@ import java.util.Map;
 
 @Configuration
 public class KafkaConsumerConfig {
-    @Value(value = "${spring.kafka.bootstrap-servers}")
+
+    @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 
-    @Bean
-    public Map<String, Object> consumerConfig() {
-        Map<String, Object> config = new HashMap<>();
-        config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
-        config.put(ConsumerConfig.GROUP_ID_CONFIG, "test-group");
-        return config;
+    @Value("${spring.kafka.consumer.group-id}")
+    private String groupId;
+
+    private Map<String, Object> consumerProps() {
+        Map<String, Object> props = new HashMap<>();
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+        props.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
+        props.put(JsonDeserializer.USE_TYPE_INFO_HEADERS, false);
+        return props;
     }
 
     @Bean
-    public ConsumerFactory<String, TransferDTO> consumerFactory() {
-        JsonDeserializer<TransferDTO> deserializer = new JsonDeserializer<>(TransferDTO.class);
-        deserializer.addTrustedPackages("*");
-
-        return new DefaultKafkaConsumerFactory<>(
-                consumerConfig(),
-                new StringDeserializer(),
-                deserializer
-        );
+    public ConsumerFactory<String, WalletUpdateResultEvent> walletTransferFailed() {
+        return new DefaultKafkaConsumerFactory<>(consumerProps(), new StringDeserializer(), new JsonDeserializer<>(WalletUpdateResultEvent.class));
+    }
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, WalletUpdateResultEvent> walletUpdateFailedFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, WalletUpdateResultEvent> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(walletTransferFailed());
+        return factory;
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, TransferDTO> factory(
-            ConsumerFactory<String, TransferDTO> consumerFactory
-    ) {
-        ConcurrentKafkaListenerContainerFactory<String, TransferDTO> factory = new ConcurrentKafkaListenerContainerFactory<>();
-        factory.setConsumerFactory(consumerFactory);
+    public ConsumerFactory<String, WalletUpdateResultEvent> walletTransferSuccess() {
+        return new DefaultKafkaConsumerFactory<>(consumerProps(), new StringDeserializer(), new JsonDeserializer<>(WalletUpdateResultEvent.class));
+    }
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, WalletUpdateResultEvent> walletUpdateSuccessFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, WalletUpdateResultEvent> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(walletTransferSuccess());
         return factory;
     }
 }

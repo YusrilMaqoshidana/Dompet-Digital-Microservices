@@ -3,6 +3,8 @@ package com.microservice.walletservice.services;
 import com.microservice.walletservice.DTO.TopupInitiatedEvent;
 import com.microservice.walletservice.DTO.TransactionInitiatedEvent;
 import com.microservice.walletservice.DTO.UserCreatedEvent;
+import com.microservice.walletservice.DTO.WalletUpdateResultEvent;
+import com.microservice.walletservice.kafka.WalletPublisherService;
 import com.microservice.walletservice.models.WalletModel;
 import com.microservice.walletservice.repository.WalletRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +20,7 @@ import java.util.Optional;
 @Slf4j
 public class WalletService {
     private final WalletRepository walletRepository;
-
+    private final WalletPublisherService walletPublisherService;
     @Transactional
     public void createWallet(UserCreatedEvent event) {
         if (walletRepository.existsByUserId(event.getUserId())) {
@@ -61,29 +63,29 @@ public class WalletService {
 
     @Transactional
     public void processTransfer(TransactionInitiatedEvent event) {
-        WalletModel senderWallet = walletRepository.findByUserId(event.getSenderId())
-                .orElseThrow(() -> new RuntimeException("Sender wallet not found for userId: " + event.getSenderId()));
+        WalletModel senderWallet = walletRepository.findByUserId(event.getSenderUserId())
+                .orElseThrow(() -> new RuntimeException("Sender wallet not found for userId: " + event.getSenderUserId()));
 
         if (!senderWallet.getStatus()) {
-            throw new RuntimeException("Sender wallet is frozen for userId: " + event.getSenderId());
+            throw new RuntimeException("Sender wallet is frozen for userId: " + event.getSenderUserId());
         }
 
         if (senderWallet.getBalance() < event.getAmount()) {
-            throw new RuntimeException("Insufficient balance for sender userId: " + event.getSenderId());
+            throw new RuntimeException("Insufficient balance for sender userId: " + event.getSenderUserId());
         }
         senderWallet.setBalance(senderWallet.getBalance() - event.getAmount());
         walletRepository.save(senderWallet);
-        log.info("Deducted {} from sender {}", event.getAmount(), event.getSenderId());
+        log.info("Deducted {} from sender {}", event.getAmount(), event.getSenderUserId());
 
-        WalletModel receiverWallet = walletRepository.findByUserId(event.getRecheiverId())
-                .orElseThrow(() -> new RuntimeException("Receiver wallet not found for userId: " + event.getRecheiverId()));
+        WalletModel receiverWallet = walletRepository.findByUserId(event.getReceiverUserId())
+                .orElseThrow(() -> new RuntimeException("Receiver wallet not found for userId: " + event.getReceiverUserId()));
 
         if (!receiverWallet.getStatus()) {
-            throw new RuntimeException("Receiver wallet is frozen for userId: " + event.getRecheiverId());
+            throw new RuntimeException("Receiver wallet is frozen for userId: " + event.getReceiverUserId());
         }
         receiverWallet.setBalance(receiverWallet.getBalance() + event.getAmount());
         walletRepository.save(receiverWallet);
-        log.info("Added {} to receiver {}", event.getAmount(), event.getRecheiverId());
+        log.info("Added {} to receiver {}", event.getAmount(), event.getReceiverUserId());
     }
 
     public Optional<WalletModel> getWalletByUserId(String userId) {

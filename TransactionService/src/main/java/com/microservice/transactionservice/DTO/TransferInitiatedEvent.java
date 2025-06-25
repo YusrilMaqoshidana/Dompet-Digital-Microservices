@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @Builder
-public class TransferDTO {
+public class TransferInitiatedEvent {
     public String transactionId;
     public String senderUserId;
     public String receiverUserId;
