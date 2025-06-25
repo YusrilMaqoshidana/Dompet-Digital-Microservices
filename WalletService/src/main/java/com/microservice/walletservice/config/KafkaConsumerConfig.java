@@ -1,5 +1,7 @@
 package com.microservice.walletservice.config;
 
+import com.microservice.walletservice.DTO.TopupInitiatedEvent;
+import com.microservice.walletservice.DTO.TransactionInitiatedEvent;
 import com.microservice.walletservice.DTO.UserCreatedEvent;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -9,7 +11,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
-import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 
 import java.util.HashMap;
@@ -18,29 +19,50 @@ import java.util.Map;
 @Configuration
 public class KafkaConsumerConfig {
 
-    @Value(value = "${spring.kafka.bootstrap-servers}")
+    @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 
-    @Bean
-    public ConsumerFactory<String, UserCreatedEvent> consumerFactory() {
+    @Value("${spring.kafka.consumer.group-id}")
+    private String groupId;
+
+    private Map<String, Object> consumerProps() {
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, "wallet");
-        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
-        props.put(JsonDeserializer.VALUE_DEFAULT_TYPE, UserCreatedEvent.class.getName());
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
         props.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
-        props.put(JsonDeserializer.USE_TYPE_INFO_HEADERS, false);
-        return new DefaultKafkaConsumerFactory<>(props);
+        return props;
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, UserCreatedEvent> factory(
-            ConsumerFactory<String, UserCreatedEvent> consumerFactory
-    ) {
-        ConcurrentKafkaListenerContainerFactory<String, UserCreatedEvent> factory =
-                new ConcurrentKafkaListenerContainerFactory<>();
-        factory.setConsumerFactory(consumerFactory);
+    public ConsumerFactory<String, UserCreatedEvent> userCreatedConsumerFactory() {
+        return new DefaultKafkaConsumerFactory<>(consumerProps(), new StringDeserializer(), new JsonDeserializer<>(UserCreatedEvent.class));
+    }
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, UserCreatedEvent> userCreatedListenerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, UserCreatedEvent> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(userCreatedConsumerFactory());
+        return factory;
+    }
+
+    @Bean
+    public ConsumerFactory<String, TopupInitiatedEvent> topupInitiatedConsumerFactory() {
+        return new DefaultKafkaConsumerFactory<>(consumerProps(), new StringDeserializer(), new JsonDeserializer<>(TopupInitiatedEvent.class));
+    }
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, TopupInitiatedEvent> topupInitiatedListenerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, TopupInitiatedEvent> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(topupInitiatedConsumerFactory());
+        return factory;
+    }
+
+    @Bean
+    public ConsumerFactory<String, TransactionInitiatedEvent> transactionInitiatedConsumerFactory() {
+        return new DefaultKafkaConsumerFactory<>(consumerProps(), new StringDeserializer(), new JsonDeserializer<>(TransactionInitiatedEvent.class));
+    }
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, TransactionInitiatedEvent> transactionInitiatedListenerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, TransactionInitiatedEvent> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(transactionInitiatedConsumerFactory());
         return factory;
     }
 }

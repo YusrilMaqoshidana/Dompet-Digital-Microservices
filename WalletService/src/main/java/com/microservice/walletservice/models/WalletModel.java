@@ -2,6 +2,8 @@ package com.microservice.walletservice.models;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -17,6 +19,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class WalletModel {
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "wallet_id")
     private String walletId;
     @Column(name = "user_id")
@@ -24,7 +27,7 @@ public class WalletModel {
     @Column(name = "account_number")
     private String accountNumber;
     @Column(name = "balance")
-    private Double balance;
+    private float balance;
     @Column(name = "status")
     private Boolean status;
     @Column(name = "created_at")
