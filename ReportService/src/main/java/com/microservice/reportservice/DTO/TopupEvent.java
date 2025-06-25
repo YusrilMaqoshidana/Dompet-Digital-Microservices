@@ -1,0 +1,12 @@
+package com.microservice.reportservice.DTO;
+
+import lombok.Data;
+
+@Data
+public class TopupEvent {
+    private String externalTransactionId;
+    private String userId;
+    private float amount;
+    private String type;
+    private String status;
+}
