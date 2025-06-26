@@ -1,0 +1,11 @@
+FROM openjdk:17-jdk-alpine
+
+RUN apk add --no-cache curl
+
+WORKDIR /app
+
+COPY target/notification-service-0.0.1-SNAPSHOT.jar /app/notification-service-0.0.1-SNAPSHOT.jar
+
+EXPOSE 8081
+
+CMD ["java", "-jar", "/app/notification-service-0.0.1-SNAPSHOT.jar"]
