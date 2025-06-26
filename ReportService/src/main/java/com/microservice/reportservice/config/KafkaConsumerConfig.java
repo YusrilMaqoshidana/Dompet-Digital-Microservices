@@ -30,18 +30,17 @@ public class KafkaConsumerConfig {
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
-        props.put(JsonDeserializer.TRUSTED_PACKAGES, "*"); // Izinkan semua package
+        props.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
         props.put(JsonDeserializer.USE_TYPE_INFO_HEADERS, false);
         return props;
     }
 
-    // ============== FACTORY UNTUK TOPUP EVENT ==============
     @Bean
     public ConsumerFactory<String, TopupEvent> topupEventConsumerFactory() {
         return new DefaultKafkaConsumerFactory<>(
                 consumerProps(),
                 new StringDeserializer(),
-                new JsonDeserializer<>(TopupEvent.class) // Eksplisit untuk TopupEvent
+                new JsonDeserializer<>(TopupEvent.class)
         );
     }
 
@@ -53,13 +52,12 @@ public class KafkaConsumerConfig {
         return factory;
     }
 
-    // ============== FACTORY UNTUK TRANSACTION EVENT ==============
     @Bean
     public ConsumerFactory<String, TransactionEvent> transactionEventConsumerFactory() {
         return new DefaultKafkaConsumerFactory<>(
                 consumerProps(),
                 new StringDeserializer(),
-                new JsonDeserializer<>(TransactionEvent.class) // Eksplisit untuk TransactionEvent
+                new JsonDeserializer<>(TransactionEvent.class)
         );
     }
 

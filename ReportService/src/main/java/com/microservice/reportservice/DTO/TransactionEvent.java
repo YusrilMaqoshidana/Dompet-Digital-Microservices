@@ -5,10 +5,12 @@ import lombok.Data;
 @Data
 public class TransactionEvent {
     private String transactionId;
-    private String fromUserId;
-    private String toUserId;
+    private String senderUserId;
+    private String receiverUserId;
     private float amount;
-    private String type;
+    private String transactionType;
     private String status;
     private String description;
+    private String createdAt;
+    private String completedAt;
 }

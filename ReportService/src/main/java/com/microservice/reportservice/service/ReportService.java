@@ -44,24 +44,24 @@ public class ReportService {
     public void createReportFromTransaction(TransactionEvent event) {
         ReportModel senderReport = new ReportModel();
         senderReport.setTransactionId(event.getTransactionId());
-        senderReport.setUserId(event.getFromUserId());
+        senderReport.setUserId(event.getSenderUserId());
         senderReport.setAmount(event.getAmount());
         senderReport.setType(ReportType.TRANSFER_OUT);
-        senderReport.setDescription("Transfer ke " + event.getToUserId());
+        senderReport.setDescription("Transfer ke " + event.getReceiverUserId());
         senderReport.setStatus("SUCCESS".equalsIgnoreCase(event.getStatus()) ? TransactionStatus.SUCCESS : TransactionStatus.FAILED);
         repository.save(senderReport);
-        log.info("Saved TRANSFER_OUT history for user {}", event.getFromUserId());
+        log.info("Saved TRANSFER_OUT history for user {}", event.getSenderUserId());
 
-        if (TransactionStatus.SUCCESS.equals(senderReport.getStatus()) && event.getToUserId() != null) {
+        if (TransactionStatus.SUCCESS.equals(senderReport.getStatus()) && event.getReceiverUserId() != null) {
             ReportModel receiverReport = new ReportModel();
             receiverReport.setTransactionId(event.getTransactionId());
-            receiverReport.setUserId(event.getToUserId());
+            receiverReport.setUserId(event.getReceiverUserId());
             receiverReport.setAmount(event.getAmount());
             receiverReport.setType(ReportType.TRANSFER_IN);
-            receiverReport.setDescription("Transfer dari " + event.getFromUserId());
+            receiverReport.setDescription("Transfer dari " + event.getSenderUserId());
             receiverReport.setStatus(TransactionStatus.SUCCESS);
             repository.save(receiverReport);
-            log.info("Saved TRANSFER_IN history for user {}", event.getToUserId());
+            log.info("Saved TRANSFER_IN history for user {}", event.getReceiverUserId());
         }
     }
 

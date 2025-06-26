@@ -1,6 +1,8 @@
 package com.microservice.topupservice.kafka;
 
 import com.microservice.topupservice.DTO.TopupDTO;
+import com.microservice.topupservice.models.TopupModel;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,9 +14,16 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class TopupPublisherService {
     private final KafkaTemplate<String, TopupDTO> kafkaTemplate;
+    private final KafkaTemplate<String, TopupModel> kafkaTemplateEvent;
 
     @Value("${topic.kafka.topup-initiated}")
     private String topupInitiatedTopic;
+
+    @Value("${topic.kafka.topup-success}")
+    private String topupSuccessedTopic;
+
+    @Value("${topic.kafka.topup-failed}")
+    private String topupFailedTopic;
 
     public void publishTopupInitiatedEvent(TopupDTO dto) {
         try {
@@ -24,6 +33,28 @@ public class TopupPublisherService {
         } catch (Exception e) {
             log.error("Failed to send Topup initiated event for transaction ID: {}",
                 dto.getExternalTransactionId(), e);
+        }
+    }
+
+    public void publishTopupSuccessedEvent(TopupModel model) {
+        try {
+            kafkaTemplateEvent.send(topupSuccessedTopic, model.getExternalTransactionId(), model);
+            log.info("Topup initiated event sent to topic '{}' for transaction ID: {}",
+                topupInitiatedTopic, model.getExternalTransactionId());
+        } catch (Exception e) {
+            log.error("Failed to send Topup initiated event for transaction ID: {}",
+                model.getExternalTransactionId(), e);
+        }
+    }
+
+    public void publishTopupFailedEvent(TopupModel model) {
+        try {
+            kafkaTemplateEvent.send(topupFailedTopic, model.getExternalTransactionId(), model);
+            log.info("Topup initiated event sent to topic '{}' for transaction ID: {}",
+                topupInitiatedTopic, model.getExternalTransactionId());
+        } catch (Exception e) {
+            log.error("Failed to send Topup initiated event for transaction ID: {}",
+                model.getExternalTransactionId(), e);
         }
     }
 }
