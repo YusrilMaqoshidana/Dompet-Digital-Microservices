@@ -13,8 +13,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 @Slf4j
 public class TopupPublisherService {
-    private final KafkaTemplate<String, TopupDTO> kafkaTemplate;
-    private final KafkaTemplate<String, TopupModel> kafkaTemplateEvent;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
     @Value("${topic.kafka.topup-initiated}")
     private String topupInitiatedTopic;
@@ -38,7 +37,7 @@ public class TopupPublisherService {
 
     public void publishTopupSuccessedEvent(TopupModel model) {
         try {
-            kafkaTemplateEvent.send(topupSuccessedTopic, model.getExternalTransactionId(), model);
+            kafkaTemplate.send(topupSuccessedTopic, model.getExternalTransactionId(), model);
             log.info("Topup initiated event sent to topic '{}' for transaction ID: {}",
                 topupInitiatedTopic, model.getExternalTransactionId());
         } catch (Exception e) {
@@ -49,7 +48,7 @@ public class TopupPublisherService {
 
     public void publishTopupFailedEvent(TopupModel model) {
         try {
-            kafkaTemplateEvent.send(topupFailedTopic, model.getExternalTransactionId(), model);
+            kafkaTemplate.send(topupFailedTopic, model.getExternalTransactionId(), model);
             log.info("Topup initiated event sent to topic '{}' for transaction ID: {}",
                 topupInitiatedTopic, model.getExternalTransactionId());
         } catch (Exception e) {
