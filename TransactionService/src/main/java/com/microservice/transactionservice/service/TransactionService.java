@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import com.microservice.transactionservice.DTO.TransferDTO;
+import com.microservice.transactionservice.DTO.TransferInitiatedEvent;
 import com.microservice.transactionservice.kafka.TransactionPublisherService;
 import org.springframework.stereotype.Service;
 
@@ -42,7 +42,7 @@ public class TransactionService {
     public TransactionModel create(TransactionDTOResponse newTransaction) {
         String generatedId = UUID.randomUUID().toString();
         TransactionModel transaction = toTransactionModel(newTransaction, generatedId);
-        TransferDTO dataTransfer = TransferDTO.builder()
+        TransferInitiatedEvent dataTransfer = TransferInitiatedEvent.builder()
                 .transactionId(generatedId)
                 .senderUserId(newTransaction.getSenderUserId())
                 .receiverUserId(newTransaction.getReceiverUserId())

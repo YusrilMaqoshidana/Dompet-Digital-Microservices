@@ -5,18 +5,26 @@ services:
     image: nginx:latest
     container_name: api-gateway-nginx
     ports:
-      - "8080:80" 
+      - "8080:80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
-      - user-service
-      - transaction-service
-      - wallet-service
-      # - topup-service
+      user-service:
+        condition: service_healthy
+      transaction-service:
+        condition: service_healthy
+      wallet-service:
+        condition: service_healthy
+      topup-service:
+        condition: service_healthy
+      report-service:
+        condition: service_healthy
+      notification-service:
+        condition: service_healthy
     networks:
       - onepay-networks
     healthcheck:
-      test: ["CMD-SHELL", "nginx -t && nginx -s reload"]
+      test: ["CMD-SHELL", "nginx -t"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -24,9 +32,8 @@ services:
 
   user-service:
     build:
-        context: ./UserService
-        dockerfile: Dockerfile
-    image: user-service
+      context: ./UserService
+      dockerfile: Dockerfile
     container_name: user-service
     ports:
       - "8081:8081"
@@ -35,85 +42,132 @@ services:
         condition: service_healthy
       ds1:
         condition: service_healthy
-      # ds2:
-      #   condition: service_healthy
       broker:
         condition: service_healthy
     networks:
       - onepay-networks
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   transaction-service:
     build:
-        context: ./TransactionService
-        dockerfile: Dockerfile
-    image: transaction-service
+      context: ./TransactionService
+      dockerfile: Dockerfile
     container_name: transaction-service
     ports:
       - "8082:8082"
     depends_on:
       postgresql-db-transactions:
         condition: service_healthy
+      user-service:
+        condition: service_healthy
       broker:
         condition: service_healthy
     networks:
       - onepay-networks
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  topup-service:
+    build:
+      context: ./TopupService
+      dockerfile: Dockerfile
+    container_name: topup-service
+    ports:
+      - "8084:8084"
+    depends_on:
+      topup_db0:
+        condition: service_healthy
+      transaction-service:
+        condition: service_healthy
+      broker:
+        condition: service_healthy
+    networks:
+      - onepay-networks
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8084/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   wallet-service:
     build:
-      context: .
-      dockerfile: WalletService/Dockerfile
+      context: ./WalletService
+      dockerfile: Dockerfile
     container_name: wallet-service
     ports:
       - "8083:8083"
     depends_on:
-      postgresql-db-wallet:
+      wallet_db0:
+        condition: service_healthy
+      topup-service:
         condition: service_healthy
       broker:
         condition: service_healthy
     networks:
       - onepay-networks
-    environment:
-      - DATABASE_URL=postgres://user:password@postgresql-db-wallet:5432/onepay_wallet_db?sslmode=disable
-      - KAFKA_BROKERS=broker:9092
-      - KAFKA_TOPIC_USER_CREATED=user.created
-      - KAFKA_TOPIC_TOPUP_SUCCESS=topup.success
-      - KAFKA_TOPIC_WALLET_UPDATED=wallet.updated
-      - KAFKA_CONSUMER_GROUP=wallet-service-group
-      - APP_PORT=8083
-    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # topup-service:
-  #   build:
-  #     context: ./TopupService
-  #     dockerfile: Dockerfile
-  #   # image: topup-service
-  #   container_name: topup-service
-  #   ports:
-  #     - "8084:8084"
-  #   depends_on:
-  #     postgresql-db-wallet:
-  #       condition: service_healthy
-  #     broker:
-  #       condition: service_healthy
-  #   networks:
-  #     - onepay-networks
-  #   environment:
-  #     - DATABASE_URL=postgres://user:password@postgresql-db-wallet:5432/onepay_wallet_db?sslmode=disable
-  #     - KAFKA_BROKERS=kafka-broker:9092
-  #     - KAFKA_TOPIC_TOPUP_SUCCESS=topup.success
-  #     - KAFKA_TOPIC_TOPUP_FAILED=topup.failed
-  #     - APP_PORT=8084
-  #   restart: unless-stopped
+  report-service:
+    build:
+      context: ./ReportService
+      dockerfile: Dockerfile
+    container_name: report-service
+    ports:
+      - "8085:8085"
+    depends_on:
+      report_db0:
+        condition: service_healthy
+      wallet-service:
+        condition: service_healthy
+      broker:
+        condition: service_healthy
+    networks:
+      - onepay-networks
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8085/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  notification-service:
+    build:
+      context: ./NotificationService
+      dockerfile: Dockerfile
+    container_name: notification-service
+    ports:
+      - "8086:8086"
+    depends_on:
+      notification_db0:
+        condition: service_healthy
+      report-service:
+        condition: service_healthy
+      broker:
+        condition: service_healthy
+    networks:
+      - onepay-networks
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   ds0:
     image: mysql:8.0
     container_name: user_db0
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: secret 
       MYSQL_DATABASE: db_1
-    ports:
-      - "3306:3306"
     volumes:
       - user_db0_data:/var/lib/mysql
     networks:
@@ -187,20 +241,82 @@ services:
     networks:
       - onepay-networks
 
-  postgresql-db-wallet:
+  wallet_db0:
     image: postgres:14-alpine
     container_name: wallet_db0
     restart: always
     ports:
       - "5435:5432"
     environment:
-      - POSTGRES_USER=user
+      - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=onepay_wallet_db
+      - POSTGRES_DB=wallet_db
     volumes:
       - wallet_db0_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d onepay_wallet_db"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+    networks:
+      - onepay-networks
+
+  topup_db0:
+    image: postgres:14-alpine
+    container_name: topup_db0
+    restart: always
+    ports:
+      - "5436:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=topup_db
+    volumes:
+      - topup_db0_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+    networks:
+      - onepay-networks
+
+  report_db0:
+    image: postgres:14-alpine
+    container_name: report_db0
+    restart: always
+    ports:
+      - "5437:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=report_db
+    volumes:
+      - report_db0_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+    networks:
+      - onepay-networks
+  notification_db0:
+    image: postgres:14-alpine
+    container_name: notification_db0
+    restart: always
+    ports:
+      - "5438:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=notification_db
+    volumes:
+      - notification_db0_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -239,6 +355,9 @@ volumes:
   user_db2_data:
   transaction_db0_data:
   wallet_db0_data:
+  topup_db0_data:
+  report_db0_data:
+  notification_db0_data:
   kafka_data:
     driver: local
 

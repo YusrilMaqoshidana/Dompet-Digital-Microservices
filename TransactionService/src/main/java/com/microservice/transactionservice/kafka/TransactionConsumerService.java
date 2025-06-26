@@ -1,6 +1,7 @@
 package com.microservice.transactionservice.kafka;
 
-import com.microservice.transactionservice.DTO.TransferDTO;
+import com.microservice.transactionservice.DTO.WalletUpdateResultEvent;
+import com.microservice.transactionservice.models.TransactionModel;
 import com.microservice.transactionservice.service.TransactionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -10,35 +11,34 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class TransactionConsumerService {
 
-    TransactionPublisherService transactionPublisherService;
-    TransactionService transactionService;
+    private final TransactionService transactionService;
+    private final TransactionPublisherService transactionPublisherService;
 
-    @KafkaListener(topics = "${app.kafka.sender-balance-deducted}", groupId = "${app.kafka.group.transaction}")
-    public void listenSenderBalanceDeducted(TransferDTO event) {
-        transactionPublisherService.publishAddReceiverBalanceEvent(event);
+    @KafkaListener(topics = "${topic.kafka.wallet-transfer-success}",
+            containerFactory = "walletUpdateSuccessFactory")
+    public void listenTransactionSuccess(WalletUpdateResultEvent event) {
+        try {
+            transactionService.update(event.getExternalTransactionId(), "SUCCESS");
+            TransactionModel transactionRecord = transactionService.getByTransactionId(event.getExternalTransactionId());
+            transactionRecord.setStatus("SUCCESS");
+            transactionPublisherService.publishTransferCompleted(transactionRecord);
+        } catch (Exception e) {
+            throw new RuntimeException("Error while updating transaction status: " + e.getMessage());
+        }
     }
 
-    @KafkaListener(topics = "${app.kafka.receiver-balance-added}", groupId = "${app.kafka.group.transaction}")
-    public void listenReceiverBalanceAdded(TransferDTO event){
-        transactionService.update(event.getTransactionId(), "SUCCESS");
-        transactionPublisherService.publishTransferCompletedEvent(event);
+    @KafkaListener(topics = "${topic.kafka.wallet-transfer-failed}",
+            containerFactory = "walletUpdateFailedFactory")
+    public void listenTransactionFailed(WalletUpdateResultEvent event) {
+        try {
+            transactionService.update(event.getExternalTransactionId(), "FAILED");
+            TransactionModel transactionModel = transactionService.getByTransactionId(event.getExternalTransactionId());
+            transactionModel.setStatus("FAILED");
+            transactionPublisherService.publishTransferFailed(transactionModel);
+        } catch (Exception e) {
+            throw new RuntimeException("Error while updating transaction status: " + e.getMessage());
+        }
     }
 
-    @KafkaListener(topics = "${app.kafka.receiver-balance-add-failed}", groupId = "${app.kafka.group.transaction}")
-    public void listenReceiverBalanceAddFailed(TransferDTO event) {
-        transactionPublisherService.publishRevertSenderBalanceEvent(event);
-    }
-
-    @KafkaListener(topics = "${app.kafka.sender-balance-deduction-failed}", groupId = "${app.kafka.group.transaction}")
-    public void listenSenderBalanceDeductionFailed(TransferDTO event) {
-        transactionService.update(event.getTransactionId(), "FAILED");
-        transactionPublisherService.publishTransferFailedEvent(event, "SENDER_BALANCE_DEDUCTION_FAILED");
-    }
-
-    @KafkaListener(topics = "${app.kafka.sender-balance-reverted}", groupId = "${app.kafka.group.transaction}")
-    public void listenSenderBalanceReverted(TransferDTO event) {
-        transactionService.update(event.getTransactionId(), "FAILED");
-        transactionPublisherService.publishTransferFailedEvent(event, "SENDER_BALANCE_REVERTED");
-    }
 
 }

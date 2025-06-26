@@ -1,11 +1,9 @@
-package com.microservice.transactionservice.DTO;
+package com.microservice.walletservice.DTO;
 
-import lombok.Builder;
 import lombok.Data;
 
 @Data
-@Builder
-public class TransferDTO {
+public class TransactionInitiatedEvent {
     public String transactionId;
     public String senderUserId;
     public String receiverUserId;
