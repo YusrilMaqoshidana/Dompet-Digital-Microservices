@@ -32,13 +32,7 @@ public class WalletController {
     }
     
     @GetMapping("/by-user/{userId}")
-    public ResponseEntity<ApiResponse<WalletModel>> getWalletByUserId(@PathVariable String userId) {
-        return walletService.getWalletByUserId(userId)
-                .map(wallet -> new ApiResponse<>(HttpStatus.OK.value(), "Wallet found", wallet))
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> new ResponseEntity<>(
-                        new ApiResponse<>(HttpStatus.NOT_FOUND.value(), "Wallet not found for user: " + userId),
-                        HttpStatus.NOT_FOUND
-                ));
+    public WalletModel getWalletByUserId(@PathVariable String userId) {
+        return walletService.getWalletByUserId(userId);
     }
 }

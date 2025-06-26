@@ -32,26 +32,31 @@ public class WalletPublisherService {
 
     public void sendTopupSuccessEvent(WalletUpdateResultEvent event) {
         log.info("Sending topup success event (balance added): {}", event);
+        event.setSuccess(true);
         kafkaTemplate.send(balanceAddedTopic, event.getExternalTransactionId(), event);
     }
     
     public void sendDebitSuccessEvent(WalletUpdateResultEvent event) {
         log.info("Sending debit success event (balance deducted): {}", event);
+        event.setSuccess(true);
         kafkaTemplate.send(balanceDeductedTopic, event.getExternalTransactionId(), event);
     }
     
     public void sendFailureEvent(WalletUpdateResultEvent event) {
         log.info("Sending topup/debit failure event: {}", event);
+        event.setSuccess(false);
         kafkaTemplate.send(deductionFailedTopic, event.getExternalTransactionId(), event);
     }
     
     public void sendTransferSuccessEvent(WalletUpdateResultEvent event) {
         log.info("Sending transfer success event: {}", event);
+        event.setSuccess(true);
         kafkaTemplate.send(transferSuccessTopic, event.getExternalTransactionId(), event);
     }
 
     public void sendTransferFailureEvent(WalletUpdateResultEvent event) {
         log.info("Sending transfer failure event: {}", event);
+        event.setSuccess(false);
         kafkaTemplate.send(transferFailedTopic, event.getExternalTransactionId(), event);
     }
 }

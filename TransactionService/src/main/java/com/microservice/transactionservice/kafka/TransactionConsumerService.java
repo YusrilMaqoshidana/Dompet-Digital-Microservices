@@ -10,23 +10,23 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class TransactionConsumerService {
 
-    TransactionService transactionService;
+    private final TransactionService transactionService;
 
-    @KafkaListener(topics = "${app.kafka.transfer-completed}",
+    @KafkaListener(topics = "${topic.kafka.wallet-transfer-success}",
             containerFactory = "walletUpdateSuccessFactory")
     public void listenTransactionSuccess(WalletUpdateResultEvent event) {
         try {
-            transactionService.update(event.getTransactionId(), "SUCCESS");
+            transactionService.update(event.getExternalTransactionId(), event.isSuccess() ? "SUCCESS" : "FAILED");
         } catch (Exception e) {
             throw new RuntimeException("Error while updating transaction status: " + e.getMessage());
         }
     }
 
-    @KafkaListener(topics = "${app.kafka.transfer-failed}",
+    @KafkaListener(topics = "${topic.kafka.wallet-transfer-failed}",
             containerFactory = "walletUpdateFailedFactory")
     public void listenTransactionFailed(WalletUpdateResultEvent event) {
         try {
-            transactionService.update(event.getTransactionId(), "FAILED");
+            transactionService.update(event.getExternalTransactionId(), "FAILED");
         } catch (Exception e) {
             throw new RuntimeException("Error while updating transaction status: " + e.getMessage());
         }

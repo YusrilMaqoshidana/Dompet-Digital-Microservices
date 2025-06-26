@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 @Slf4j
 public class TopupPublisherService {
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final KafkaTemplate<String, TopupDTO> kafkaTemplate;
 
     @Value("${topic.kafka.topup-initiated}")
     private String topupInitiatedTopic;

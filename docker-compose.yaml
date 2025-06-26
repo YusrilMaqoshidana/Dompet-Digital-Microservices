@@ -72,28 +72,6 @@ services:
       timeout: 5s
       retries: 5
 
-  wallet-service:
-    build:
-      context: ./WalletService
-      dockerfile: Dockerfile
-    container_name: wallet-service
-    ports:
-      - "8083:8083"
-    depends_on:
-      wallet_db0:
-        condition: service_healthy
-      transaction-service:
-        condition: service_healthy
-      broker:
-        condition: service_healthy
-    networks:
-      - onepay-networks
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   topup-service:
     build:
       context: ./TopupService
@@ -104,7 +82,7 @@ services:
     depends_on:
       topup_db0:
         condition: service_healthy
-      wallet-service:
+      transaction-service:
         condition: service_healthy
       broker:
         condition: service_healthy
@@ -112,6 +90,28 @@ services:
       - onepay-networks
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8084/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  wallet-service:
+    build:
+      context: ./WalletService
+      dockerfile: Dockerfile
+    container_name: wallet-service
+    ports:
+      - "8083:8083"
+    depends_on:
+      wallet_db0:
+        condition: service_healthy
+      topup-service:
+        condition: service_healthy
+      broker:
+        condition: service_healthy
+    networks:
+      - onepay-networks
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -126,7 +126,7 @@ services:
     depends_on:
       report_db0:
         condition: service_healthy
-      topup-service:
+      wallet-service:
         condition: service_healthy
       broker:
         condition: service_healthy

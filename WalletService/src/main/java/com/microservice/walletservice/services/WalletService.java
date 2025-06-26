@@ -39,9 +39,10 @@ public class WalletService {
 
     @Transactional
     public void processTopup(TopupInitiatedEvent event) {
-        WalletModel wallet = walletRepository.findByUserId(event.getUserId())
-                .orElseThrow(() -> new RuntimeException("Wallet not found for userId: " + event.getUserId()));
-
+        WalletModel wallet = walletRepository.findWalletModelByUserId(event.getUserId());
+        if (wallet == null) {
+            throw new RuntimeException("Wallet not found for userId: " + event.getUserId());
+        }
         if (!wallet.getStatus()) {
             throw new RuntimeException("Wallet is frozen for userId: " + event.getUserId());
         }
@@ -63,8 +64,7 @@ public class WalletService {
 
     @Transactional
     public void processTransfer(TransactionInitiatedEvent event) {
-        WalletModel senderWallet = walletRepository.findByUserId(event.getSenderUserId())
-                .orElseThrow(() -> new RuntimeException("Sender wallet not found for userId: " + event.getSenderUserId()));
+        WalletModel senderWallet = walletRepository.findWalletModelByUserId(event.getSenderUserId());
 
         if (!senderWallet.getStatus()) {
             throw new RuntimeException("Sender wallet is frozen for userId: " + event.getSenderUserId());
@@ -77,8 +77,7 @@ public class WalletService {
         walletRepository.save(senderWallet);
         log.info("Deducted {} from sender {}", event.getAmount(), event.getSenderUserId());
 
-        WalletModel receiverWallet = walletRepository.findByUserId(event.getReceiverUserId())
-                .orElseThrow(() -> new RuntimeException("Receiver wallet not found for userId: " + event.getReceiverUserId()));
+        WalletModel receiverWallet = walletRepository.findWalletModelByUserId(event.getReceiverUserId());
 
         if (!receiverWallet.getStatus()) {
             throw new RuntimeException("Receiver wallet is frozen for userId: " + event.getReceiverUserId());
@@ -88,8 +87,8 @@ public class WalletService {
         log.info("Added {} to receiver {}", event.getAmount(), event.getReceiverUserId());
     }
 
-    public Optional<WalletModel> getWalletByUserId(String userId) {
-        return walletRepository.findByUserId(userId);
+    public WalletModel getWalletByUserId(String userId) {
+        return walletRepository.findWalletModelByUserId(userId);
     }
 
     public List<WalletModel> getAllWallets() {
