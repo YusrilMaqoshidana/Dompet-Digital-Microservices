@@ -1,0 +1,45 @@
+# sharding.yaml
+mode:
+  type: Standalone
+  repository:
+    type: JDBC
+
+dataSources:
+  db0:
+    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+    driverClassName: com.mysql.cj.jdbc.Driver
+    jdbcUrl: jdbc:mysql://wallet_db0:3306/walletdb0?useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: secret
+  db1:
+    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+    driverClassName: com.mysql.cj.jdbc.Driver
+    jdbcUrl: jdbc:mysql://wallet_db1:3306/walletdb1?useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: secret
+  db2:
+    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+    driverClassName: org.postgresql.Driver
+    jdbcUrl: jdbc:postgresql://wallet_db2:5432/walletdb2
+    username: postgres
+    password: secret
+
+rules:
+  - !SHARDING
+    tables:
+      wallets:
+        actualDataNodes: db${0..2}.wallets
+    defaultDatabaseStrategy:
+      standard:
+        shardingColumn: user_id
+        shardingAlgorithmName: database_inline
+    defaultTableStrategy:
+      none:
+    shardingAlgorithms:
+      database_inline:
+        type: INLINE
+        props:
+          algorithm-expression: db${user_id.hashCode().abs() % 3}
+
+props:
+  sql-show: false

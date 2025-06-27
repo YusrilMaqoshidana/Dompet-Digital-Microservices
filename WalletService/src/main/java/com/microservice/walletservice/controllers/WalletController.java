@@ -35,4 +35,6 @@ public class WalletController {
     public WalletModel getWalletByUserId(@PathVariable String userId) {
         return walletService.getWalletByUserId(userId);
     }
+
+    
 }

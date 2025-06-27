@@ -19,7 +19,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class WalletModel {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "wallet_id")
     private String walletId;
     @Column(name = "user_id")
@@ -30,8 +29,8 @@ public class WalletModel {
     private float balance;
     @Column(name = "status")
     private Boolean status;
-    @Column(name = "created_at")
+    @Column(name = "created_at", updatable = false, insertable = false)
     private String createdAt;
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", updatable = false, insertable = false)
     private String updatedAt;
 }

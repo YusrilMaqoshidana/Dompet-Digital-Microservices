@@ -16,13 +16,13 @@ Lalu di dalam shell MySQL:
 
 ```sql
 CREATE TABLE wallets (
-    wallet_id VARCHAR(36) NOT NULL,
+    wallet_id VARCHAR(255) NOT NULL,
     user_id VARCHAR(255) NOT NULL,
     account_number VARCHAR(255) NOT NULL,
     balance DECIMAL(19, 4) NOT NULL DEFAULT 0.00,
     status BOOLEAN NOT NULL DEFAULT TRUE,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (wallet_id)
 );
 ```
@@ -49,13 +49,13 @@ Lalu jalankan perintah berikut:
 
 ```sql
 CREATE TABLE wallets (
-    wallet_id UUID NOT NULL,
+    wallet_id VARCHAR(255) NOT NULL,
     user_id VARCHAR(255) NOT NULL,
     account_number VARCHAR(255) NOT NULL,
     balance NUMERIC(19, 4) NOT NULL DEFAULT 0.00,
     status BOOLEAN NOT NULL DEFAULT TRUE,
-    created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-    updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
+    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(),
+    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(),
     PRIMARY KEY (wallet_id)
 );
 

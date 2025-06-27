@@ -11,6 +11,4 @@ public class UserCreatedEvent {
     private String userId;
     @JsonProperty("accountNumber")
     private String accountNumber;
-    @JsonProperty("createdAt")
-    private String createdAt;
 }

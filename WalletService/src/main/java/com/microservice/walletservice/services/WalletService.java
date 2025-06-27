@@ -12,22 +12,26 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class WalletService {
     private final WalletRepository walletRepository;
-    private final WalletPublisherService walletPublisherService;
+
     @Transactional
     public void createWallet(UserCreatedEvent event) {
         if (walletRepository.existsByUserId(event.getUserId())) {
             log.warn("Wallet for userId {} already exists. Ignoring event.", event.getUserId());
             return;
         }
+        String generateId = UUID.randomUUID().toString();
         WalletModel wallet = WalletModel.builder()
+                .walletId(generateId)
                 .userId(event.getUserId())
                 .accountNumber(event.getAccountNumber())
                 .balance(0.0f)
@@ -57,7 +61,6 @@ public class WalletService {
         } else {
             throw new RuntimeException("Unknown topup type: " + event.getType());
         }
-
         walletRepository.save(wallet);
         log.info("Balance for userId {} updated successfully. New balance: {}", wallet.getUserId(), wallet.getBalance());
     }

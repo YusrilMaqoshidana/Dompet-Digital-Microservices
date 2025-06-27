@@ -42,6 +42,8 @@ services:
         condition: service_healthy
       ds1:
         condition: service_healthy
+      ds2:
+        condition: service_healthy
       broker:
         condition: service_healthy
     networks:
@@ -106,8 +108,14 @@ services:
     depends_on:
       wallet_db0:
         condition: service_healthy
-      topup-service:
+      wallet_db1:
         condition: service_healthy
+      wallet_db2:
+        condition: service_healthy
+      user-service:
+        condition: service_healthy
+      # topup-service:
+      #   condition: service_healthy
       broker:
         condition: service_healthy
     networks:
@@ -199,26 +207,89 @@ services:
       retries: 10
       start_period: 30s
   
-  # ds2:
-  #   image: postgres:13
-  #   container_name: user_db2
-  #   restart: always
-  #   ports:
-  #     - "5436:5432"
-  #   environment:
-  #     POSTGRES_USER: postgres
-  #     POSTGRES_PASSWORD: secret
-  #     POSTGRES_DB: db_3
-  #   volumes:
-  #     -  user_db2_data:/var/lib/postgresql/data
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "pg_isready -U postgres"]
-  #     interval: 5s
-  #     timeout: 3s
-  #     retries: 10
-  #     start_period: 30s
-  #   networks:
-  #     - onepay-networks
+  ds2:
+    image: postgres:14-alpine
+    container_name: user_db2
+    restart: always
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: db_3
+    volumes:
+      -  user_db2_data:/var/lib/postgresql/data
+    networks:
+      - onepay-networks
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+
+ 
+
+  wallet_db0:
+    image: mysql:8.0
+    container_name: wallet_db0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: walletdb0
+    ports:
+      - "3308:3306"
+    volumes:
+      - wallet_db0_data:/var/lib/mysql
+    networks:
+      - onepay-networks
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-psecret"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+  
+  wallet_db1:
+    image: mysql:8.0
+    container_name: wallet_db1
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: walletdb1
+    ports:
+      - "3309:3306"
+    volumes:
+      - wallet_db1_data:/var/lib/mysql
+    networks:
+      - onepay-networks
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-psecret"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+
+  wallet_db2:
+    image: postgres:14-alpine
+    container_name: wallet_db2
+    restart: always
+    ports:
+      - "5434:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=secret
+      - POSTGRES_DB=walletdb2
+    volumes:
+      - wallet_db2_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+    networks:
+      - onepay-networks
 
   postgresql-db-transactions:
     image: postgres:13
@@ -232,27 +303,6 @@ services:
       POSTGRES_DB: transactions
     volumes:
       - transaction_db0_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-      start_period: 30s
-    networks:
-      - onepay-networks
-
-  wallet_db0:
-    image: postgres:14-alpine
-    container_name: wallet_db0
-    restart: always
-    ports:
-      - "5435:5432"
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=wallet_db
-    volumes:
-      - wallet_db0_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -355,6 +405,8 @@ volumes:
   user_db2_data:
   transaction_db0_data:
   wallet_db0_data:
+  wallet_db1_data:
+  wallet_db2_data:
   topup_db0_data:
   report_db0_data:
   notification_db0_data:
