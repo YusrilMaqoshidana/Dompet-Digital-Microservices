@@ -53,8 +53,8 @@ public class NotificationService {
         return NotificationModel.builder()
                 .notificationId(generateId)
                 .userId(event.getSenderUserId())
-                .type(NotificationModel.NotificationType.TOPUP)
-                .message("Pengiriman dana ke " + event.getReceiverUserId() + " dengan Jumlah" + event.getAmount() + " " + event.getStatus())
+                .type(NotificationModel.NotificationType.TRANSACTION)
+                .message("Pengiriman dana ke ID " + event.getReceiverUserId() + " dengan Jumlah " + event.getAmount() + " " + event.getStatus())
                 .createdAt(now)
                 .build();
     }
@@ -65,8 +65,8 @@ public class NotificationService {
         return NotificationModel.builder()
                 .notificationId(generateId)
                 .userId(event.getReceiverUserId())
-                .type(NotificationModel.NotificationType.TOPUP)
-                .message("Kamu menerima dana dari " + event.getSenderUserId() + " dengan Jumlah" + event.getAmount())
+                .type(NotificationModel.NotificationType.TRANSACTION)
+                .message("Kamu menerima dana dari ID " + event.getSenderUserId() + " dengan Jumlah " + event.getAmount())
                 .createdAt(now)
                 .build();
     }
