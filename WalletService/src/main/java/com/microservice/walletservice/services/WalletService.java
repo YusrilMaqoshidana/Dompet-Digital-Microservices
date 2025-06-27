@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,11 +28,14 @@ public class WalletService {
             log.warn("Wallet for userId {} already exists. Ignoring event.", event.getUserId());
             return;
         }
+        String updatedAt = LocalDate.now().toString();
         WalletModel wallet = WalletModel.builder()
                 .userId(event.getUserId())
                 .accountNumber(event.getAccountNumber())
                 .balance(0.0f)
                 .status(true)
+                .createdAt(event.getCreatedAt())
+                .updatedAt(updatedAt)
                 .build();
         walletRepository.save(wallet);
         log.info("Wallet created successfully for userId {}", event.getUserId());
@@ -58,6 +62,7 @@ public class WalletService {
             throw new RuntimeException("Unknown topup type: " + event.getType());
         }
 
+        wallet.setUpdatedAt(LocalDate.now().toString());
         walletRepository.save(wallet);
         log.info("Balance for userId {} updated successfully. New balance: {}", wallet.getUserId(), wallet.getBalance());
     }
@@ -74,6 +79,7 @@ public class WalletService {
             throw new RuntimeException("Insufficient balance for sender userId: " + event.getSenderUserId());
         }
         senderWallet.setBalance(senderWallet.getBalance() - event.getAmount());
+        senderWallet.setUpdatedAt(LocalDate.now().toString());
         walletRepository.save(senderWallet);
         log.info("Deducted {} from sender {}", event.getAmount(), event.getSenderUserId());
 
@@ -83,6 +89,7 @@ public class WalletService {
             throw new RuntimeException("Receiver wallet is frozen for userId: " + event.getReceiverUserId());
         }
         receiverWallet.setBalance(receiverWallet.getBalance() + event.getAmount());
+        receiverWallet.setUpdatedAt(LocalDate.now().toString());
         walletRepository.save(receiverWallet);
         log.info("Added {} to receiver {}", event.getAmount(), event.getReceiverUserId());
     }

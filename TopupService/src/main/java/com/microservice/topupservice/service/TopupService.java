@@ -60,9 +60,15 @@ public class TopupService {
         topupRepository.findByExternalTransactionId(event.getExternalTransactionId()).ifPresentOrElse(
             topup -> {
                 if (topup.getStatus() == TransactionStatus.PENDING) {
+                    boolean isSuccess = event.isSuccess();
                     topup.setStatus(event.isSuccess() ? TransactionStatus.SUCCESS : TransactionStatus.FAILED);
-                    topupRepository.save(topup);
-                    log.info("Transaction {} updated to {}.", topup.getExternalTransactionId(), topup.getStatus());
+                    TopupModel finalTopupState = topupRepository.save(topup);
+                    log.info("Transaction {} updated to {}.", finalTopupState.getExternalTransactionId(), finalTopupState.getStatus());
+                    if (isSuccess) {
+                        topupPublisherService.publishTopupSuccessEvent(finalTopupState);
+                    } else {
+                        topupPublisherService.publishTopupFailedEvent(finalTopupState);
+                    }
                 } else {
                     log.warn("Received event for already finalized transaction ID: {}", topup.getExternalTransactionId());
                 }
