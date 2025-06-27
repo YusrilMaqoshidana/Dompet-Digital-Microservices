@@ -39,13 +39,29 @@ public class NotificationService {
     String generateId = UUID.randomUUID().toString();
     String now = LocalDateTime.now().toString();
     String message;
-    if ("CREDIT".equalsIgnoreCase(event.getType())) {
-        message = "Top-up sebesar " + event.getAmount() + " telah " + event.getStatus().toLowerCase() + ". Saldo Anda telah bertambah.";
-    } else if ("DEBIT".equalsIgnoreCase(event.getType())) {
-        message = "Transaksi debit sebesar " + event.getAmount() + " telah " + event.getStatus().toLowerCase() + ". Saldo Anda telah berkurang.";
+    String status = event.getStatus().toLowerCase();
+    String type = event.getType().toUpperCase();
+
+    if ("SUCCESS".equalsIgnoreCase(status)) {
+        if ("CREDIT".equals(type)) {
+            message = "Top-up sebesar " + event.getAmount() + " telah berhasil. Saldo Anda telah bertambah.";
+        } else if ("DEBIT".equals(type)) {
+            message = "Transaksi debit sebesar " + event.getAmount() + " telah berhasil. Saldo Anda telah berkurang.";
+        } else {
+            message = "Transaksi sebesar " + event.getAmount() + " telah berhasil.";
+        }
+    } else if ("FAILED".equalsIgnoreCase(status)) {
+        if ("CREDIT".equals(type)) {
+            message = "Top-up sebesar " + event.getAmount() + " gagal. Saldo Anda tidak berubah. Silakan coba lagi.";
+        } else if ("DEBIT".equals(type)) {
+            message = "Transaksi debit sebesar " + event.getAmount() + " gagal. Saldo Anda tidak berkurang.";
+        } else {
+            message = "Transaksi sebesar " + event.getAmount() + " gagal.";
+        }
     } else {
-        message = "Transaksi sebesar " + event.getAmount() + " statusnya " + event.getStatus().toLowerCase();
+        message = "Transaksi sebesar " + event.getAmount() + " statusnya " + status + ".";
     }
+
     return NotificationModel.builder()
             .notificationId(generateId)
             .userId(event.getUserId())
