@@ -31,21 +31,29 @@ public class NotificationService {
         notificationRepository.save(notificationModel);
     }
 
-    public NotificationModel getUserNotification(String userId) {
+    public List<NotificationModel> getUserNotification(String userId) {
         return notificationRepository.findNotificationModelByUserId(userId);
     }
 
-    private NotificationModel eventToTopupResponse(TopupModelResponse event) {
-        String generateId = UUID.randomUUID().toString();
-        String now = LocalDateTime.now().toString();
-        return NotificationModel.builder()
-                .notificationId(generateId)
-                .userId(event.getUserId())
-                .type(NotificationModel.NotificationType.TOPUP)
-                .message("Topup " + event.getStatus() + " dengan Jumlah " + event.getAmount())
-                .createdAt(now)
-                .build();
+   private NotificationModel eventToTopupResponse(TopupModelResponse event) {
+    String generateId = UUID.randomUUID().toString();
+    String now = LocalDateTime.now().toString();
+    String message;
+    if ("CREDIT".equalsIgnoreCase(event.getType())) {
+        message = "Top-up sebesar " + event.getAmount() + " telah " + event.getStatus().toLowerCase() + ". Saldo Anda telah bertambah.";
+    } else if ("DEBIT".equalsIgnoreCase(event.getType())) {
+        message = "Transaksi debit sebesar " + event.getAmount() + " telah " + event.getStatus().toLowerCase() + ". Saldo Anda telah berkurang.";
+    } else {
+        message = "Transaksi sebesar " + event.getAmount() + " statusnya " + event.getStatus().toLowerCase();
     }
+    return NotificationModel.builder()
+            .notificationId(generateId)
+            .userId(event.getUserId())
+            .type(NotificationModel.NotificationType.TOPUP)
+            .message(message)
+            .createdAt(now)
+            .build();
+}
 
     private NotificationModel eventToSenderTransactionResponse(TransactionModelResponse event) {
         String generateId = UUID.randomUUID().toString();
