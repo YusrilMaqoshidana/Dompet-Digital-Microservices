@@ -60,7 +60,6 @@ public class UserService {
         user.setFullName(dto.getFullName());
         user.setPhoneNumber(dto.getPhoneNumber());
         user.setPassword(hashPassword);
-        user.setDateRegistered(now);
         user.setActive(true);
         return user;
     }
@@ -71,20 +70,31 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    private void printHashUserId(String userId, String username){
-       if (userId == null) {
-           System.err.println("Error: User ID cannot be null.");
-           return; // Exit the method if userId is null.
-       }
-       int userIdHash = Math.abs(userId.hashCode());
-       System.out.println("User ID Hash: " + userIdHash);
-       if (userIdHash % 2 == 0) {
-           // If the hash is even
-           System.out.println(username + " Masuk ke ds_0 (even hash)");
-       } else {
-           // If the hash is odd
-           System.out.println(username + " Masuk ke ds_1 (odd hash)");
-       }
-   }
+     private void printHashUserId(String userId, String username) {
+            if (userId == null) {
+                System.err.println("Error: User ID cannot be null.");
+                return;
+            }
+
+            int userIdHash = Math.abs(userId.hashCode());
+            System.out.println("User ID Hash: " + userIdHash);
+
+            int shardKey = userIdHash % 3;
+
+            switch (shardKey) {
+                case 0:
+                    // Jika sisa baginya 0
+                    System.out.println(username + " masuk ke ds_0 (hash % 3 == 0)");
+                    break;
+                case 1:
+                    // Jika sisa baginya 1
+                    System.out.println(username + " masuk ke ds_1 (hash % 3 == 1)");
+                    break;
+                case 2:
+                    // Jika sisa baginya 2
+                    System.out.println(username + " masuk ke ds_2 (hash % 3 == 2)");
+                    break;
+            }
+        }
 
 }

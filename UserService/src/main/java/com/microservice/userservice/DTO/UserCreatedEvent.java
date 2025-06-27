@@ -14,5 +14,4 @@ import java.time.Instant;
 public class UserCreatedEvent {
     private String userId;
     private String accountNumber;
-    private String createdAt;
 }

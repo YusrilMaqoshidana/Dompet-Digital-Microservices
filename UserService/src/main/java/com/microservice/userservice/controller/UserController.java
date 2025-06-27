@@ -107,18 +107,29 @@ public class UserController {
         }
     }
 
-    @PostMapping("/login")
-    public ResponseEntity<ApiResponse<Boolean>> registerUser(
+   @PostMapping("/login")
+    public ResponseEntity<ApiResponse<Boolean>> loginUser(
             @RequestBody LoginDTOResponse userLogin
     ) {
         try{
             boolean isSuccesLogin = userService.login(userLogin);
-            ApiResponse<Boolean> response = new ApiResponse<>(
-                    HttpStatus.CREATED.value(),
-                    "User created successfully",
-                    isSuccesLogin
-            );
-            return new ResponseEntity<>(response, HttpStatus.CREATED);
+            if (!isSuccesLogin){
+                return new ResponseEntity<>(
+                        new ApiResponse<>(
+                                HttpStatus.NOT_FOUND.value(),
+                                "Login failed"
+                        ),
+                        HttpStatus.NOT_FOUND
+                );
+            } else {
+                return new ResponseEntity<>(
+                        new ApiResponse<>(
+                                HttpStatus.OK.value(),
+                                "Login success"
+                        ),
+                        HttpStatus.OK
+                );
+            }
 
         } catch (Exception e) {
             ApiResponse<Boolean> errorResponse = new ApiResponse<>(
@@ -128,6 +139,7 @@ public class UserController {
             return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
 
     @PutMapping
     public ResponseEntity<ApiResponse<UserModel>> updateProfile(

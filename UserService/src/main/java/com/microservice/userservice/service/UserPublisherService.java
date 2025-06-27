@@ -26,7 +26,6 @@ public class UserPublisherService {
         UserCreatedEvent event = UserCreatedEvent.builder()
                 .userId(userModel.getUserId())
                 .accountNumber(userModel.getPhoneNumber())
-                .createdAt(Instant.now().toString())
                 .build();
         kafkaTemplate.send(topicName, event);
     }

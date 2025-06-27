@@ -27,8 +27,8 @@ public class UserModel {
     @Column(name = "password", nullable = false)
     private String password;
 
-    @Column(name = "date_registered", nullable = false)
-    private LocalDateTime dateRegistered;
+    @Column(name = "date_registered", updatable = false, insertable = false)
+    private String dateRegistered;
 
     @Column(name = "is_active", nullable = false)
     private boolean isActive;

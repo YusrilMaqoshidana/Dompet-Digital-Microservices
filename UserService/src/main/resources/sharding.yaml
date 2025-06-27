@@ -17,18 +17,18 @@ dataSources:
     jdbcUrl: jdbc:mysql://ds1:3306/db_2?useSSL=false&allowPublicKeyRetrieval=true
     username: root
     password: secret
-#  ds2:
-#    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
-#    driverClassName: org.postgresql.Driver
-#    jdbcUrl: jdbc:postgresql://ds2:5432/db_3
-#    username: postgres
-#    password: secret
+  ds2:
+    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+    driverClassName: org.postgresql.Driver
+    jdbcUrl: jdbc:postgresql://ds2:5432/db_3
+    username: postgres
+    password: secret
 
 rules:
   - !SHARDING
     tables:
-      t_user:
-        actualDataNodes: ds${0..1}.t_user
+      users:
+        actualDataNodes: ds${0..2}.users
     defaultDatabaseStrategy:
       standard:
         shardingColumn: user_id
@@ -39,7 +39,7 @@ rules:
       database_inline:
         type: INLINE
         props:
-          algorithm-expression: ds${user_id.hashCode().abs() % 2}
+          algorithm-expression: ds${user_id.hashCode().abs() % 3}
 
 props:
   sql-show: false
