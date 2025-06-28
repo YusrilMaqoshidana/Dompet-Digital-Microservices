@@ -39,10 +39,6 @@ public class TopupModel {
     private TransactionStatus status;
 
     @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at", updatable = false, insertable = false)
     private String createdAt;
-
-    @UpdateTimestamp
-    @Column(name = "updated_at")
-    private String updatedAt;
 }

@@ -19,7 +19,7 @@ public class TopupPublisherService {
     private String topupInitiatedTopic;
 
     @Value("${topic.kafka.topup-success}")
-    private String topupSuccessedTopic;
+    private String topupSuccessTopic;
 
     @Value("${topic.kafka.topup-failed}")
     private String topupFailedTopic;
@@ -35,9 +35,9 @@ public class TopupPublisherService {
         }
     }
 
-    public void publishTopupSuccessedEvent(TopupModel model) {
+    public void publishTopupSuccessEvent(TopupModel model) {
         try {
-            kafkaTemplate.send(topupSuccessedTopic, model.getExternalTransactionId(), model);
+            kafkaTemplate.send(topupSuccessTopic, model.getExternalTransactionId(), model);
             log.info("Topup initiated event sent to topic '{}' for transaction ID: {}",
                 topupInitiatedTopic, model.getExternalTransactionId());
         } catch (Exception e) {

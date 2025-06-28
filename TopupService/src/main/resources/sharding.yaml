@@ -1,0 +1,45 @@
+# sharding.yaml
+mode:
+  type: Standalone
+  repository:
+    type: JDBC
+
+dataSources:
+  db0:
+    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+    driverClassName: com.mysql.cj.jdbc.Driver
+    jdbcUrl: jdbc:mysql://topup_db0:3306/topupdb0?useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: secret
+  db1:
+    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+    driverClassName: com.mysql.cj.jdbc.Driver
+    jdbcUrl: jdbc:mysql://topup_db1:3306/topupdb1?useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: secret
+  db2:
+    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+    driverClassName: org.postgresql.Driver
+    jdbcUrl: jdbc:postgresql://topup_db2:5432/topupdb2
+    username: postgres
+    password: secret
+
+rules:
+  - !SHARDING
+    tables:
+      topup:
+        actualDataNodes: db${0..2}.topup
+    defaultDatabaseStrategy:
+      standard:
+        shardingColumn: user_id
+        shardingAlgorithmName: database_inline
+    defaultTableStrategy:
+      none:
+    shardingAlgorithms:
+      database_inline:
+        type: INLINE
+        props:
+          algorithm-expression: db${Math.abs(user_id.hashCode()) % 3}
+
+props:
+  sql-show: false
