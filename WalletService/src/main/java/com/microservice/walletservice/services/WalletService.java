@@ -51,43 +51,52 @@ public class WalletService {
             throw new RuntimeException("Wallet is frozen for userId: " + event.getUserId());
         }
 
+        float newBalance;
+
         if ("CREDIT".equalsIgnoreCase(event.getType())) {
-            wallet.setBalance(wallet.getBalance() + event.getAmount());
+            newBalance = wallet.getBalance() + event.getAmount();
         } else if ("DEBIT".equalsIgnoreCase(event.getType())) {
             if (wallet.getBalance() < event.getAmount()) {
                 throw new RuntimeException("Insufficient balance for userId: " + event.getUserId());
             }
-            wallet.setBalance(wallet.getBalance() - event.getAmount());
+            newBalance = wallet.getBalance() - event.getAmount();
         } else {
             throw new RuntimeException("Unknown topup type: " + event.getType());
         }
-        walletRepository.save(wallet);
-        log.info("Balance for userId {} updated successfully. New balance: {}", wallet.getUserId(), wallet.getBalance());
+        walletRepository.updateBalanceByUserId(event.getUserId(), newBalance);
+        log.info("Balance for userId {} updated successfully. New balance: {}", event.getUserId(), newBalance);
     }
 
     @Transactional
     public void processTransfer(TransactionInitiatedEvent event) {
         WalletModel senderWallet = walletRepository.findWalletModelByUserId(event.getSenderUserId());
+        WalletModel receiverWallet = walletRepository.findWalletModelByUserId(event.getReceiverUserId());
 
+        if (senderWallet == null) {
+            throw new RuntimeException("Sender wallet not found for userId: " + event.getSenderUserId());
+        }
+        if (receiverWallet == null) {
+            throw new RuntimeException("Receiver wallet not found for userId: " + event.getReceiverUserId());
+        }
         if (!senderWallet.getStatus()) {
             throw new RuntimeException("Sender wallet is frozen for userId: " + event.getSenderUserId());
         }
-
-        if (senderWallet.getBalance() < event.getAmount()) {
-            throw new RuntimeException("Insufficient balance for sender userId: " + event.getSenderUserId());
-        }
-        senderWallet.setBalance(senderWallet.getBalance() - event.getAmount());
-        walletRepository.save(senderWallet);
-        log.info("Deducted {} from sender {}", event.getAmount(), event.getSenderUserId());
-
-        WalletModel receiverWallet = walletRepository.findWalletModelByUserId(event.getReceiverUserId());
-
         if (!receiverWallet.getStatus()) {
             throw new RuntimeException("Receiver wallet is frozen for userId: " + event.getReceiverUserId());
         }
-        receiverWallet.setBalance(receiverWallet.getBalance() + event.getAmount());
-        walletRepository.save(receiverWallet);
-        log.info("Added {} to receiver {}", event.getAmount(), event.getReceiverUserId());
+        if (senderWallet.getBalance() < event.getAmount()) {
+            throw new RuntimeException("Insufficient balance for sender userId: " + event.getSenderUserId());
+        }
+
+        float newSenderBalance = senderWallet.getBalance() - event.getAmount();
+        float newReceiverBalance = receiverWallet.getBalance() + event.getAmount();
+
+        walletRepository.updateBalanceByUserId(event.getSenderUserId(), newSenderBalance);
+        log.info("Deducted {} from sender {}. New balance: {}", event.getAmount(), event.getSenderUserId(), newSenderBalance);
+
+        walletRepository.updateBalanceByUserId(event.getReceiverUserId(), newReceiverBalance);
+        log.info("Added {} to receiver {}. New balance: {}", event.getAmount(), event.getReceiverUserId(), newReceiverBalance);
+
     }
 
     public WalletModel getWalletByUserId(String userId) {

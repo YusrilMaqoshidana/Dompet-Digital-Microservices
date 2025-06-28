@@ -25,12 +25,7 @@ public class NotificationConsumerService {
             containerFactory = "transactionListenerContainerFactory")
     public void consumeTransactionEvents(TransactionModelResponse event) {
         log.info("Consumed transaction event -> {}", event);
-        if (event.getStatus().equals("SUCCESS")){
-            notificationService.createNotificationFromSenderTransaction(event);
-            notificationService.createNotificationFromReceiverTransaction(event);
-        } else {
-            notificationService.createNotificationFromSenderTransaction(event);
-        }
+        notificationService.createNotificationFromSenderTransaction(event);
     }
 }
 

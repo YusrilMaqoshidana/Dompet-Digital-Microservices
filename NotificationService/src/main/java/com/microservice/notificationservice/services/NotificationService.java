@@ -6,6 +6,7 @@ import com.microservice.notificationservice.models.NotificationModel;
 import com.microservice.notificationservice.repositories.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,13 +23,12 @@ public class NotificationService {
     }
 
     public void createNotificationFromSenderTransaction(TransactionModelResponse event) {
-        NotificationModel notificationModel = eventToSenderTransactionResponse(event);
-        notificationRepository.save(notificationModel);
-    }
-
-    public void createNotificationFromReceiverTransaction(TransactionModelResponse event) {
-        NotificationModel notificationModel = eventToReceiverTransactionResponse(event);
-        notificationRepository.save(notificationModel);
+        NotificationModel senderNotif = eventToSenderTransactionResponse(event);
+        notificationRepository.save(senderNotif);
+        if ("SUCCESS".equalsIgnoreCase(event.getStatus())) {
+            NotificationModel receiverNotif = eventToReceiverTransactionResponse(event);
+            notificationRepository.save(receiverNotif);
+        }
     }
 
     public List<NotificationModel> getUserNotification(String userId) {
@@ -64,7 +64,7 @@ public class NotificationService {
         return NotificationModel.builder()
                 .notificationId(generateId)
                 .userId(event.getUserId())
-                .type(NotificationModel.NotificationType.TOPUP)
+                .type(event.getType().toUpperCase())
                 .message(message)
                 .build();
     }
@@ -74,7 +74,7 @@ public class NotificationService {
         return NotificationModel.builder()
                 .notificationId(generateId)
                 .userId(event.getSenderUserId())
-                .type(NotificationModel.NotificationType.TRANSACTION)
+                .type(event.getTransactionType().toUpperCase())
                 .message("Pengiriman dana ke ID " + event.getReceiverUserId() + " dengan Jumlah " + event.getAmount() + " " + event.getStatus())
                 .build();
     }
@@ -84,7 +84,7 @@ public class NotificationService {
         return NotificationModel.builder()
                 .notificationId(generateId)
                 .userId(event.getReceiverUserId())
-                .type(NotificationModel.NotificationType.TRANSACTION)
+                .type(event.getTransactionType().toUpperCase())
                 .message("Kamu menerima dana dari ID " + event.getSenderUserId() + " dengan Jumlah " + event.getAmount())
                 .build();
     }

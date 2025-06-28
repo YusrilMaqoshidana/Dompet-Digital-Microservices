@@ -38,7 +38,6 @@ public class TopupModel {
     @Column(name = "status", nullable = false)
     private TransactionStatus status;
 
-    @CreationTimestamp
     @Column(name = "created_at", updatable = false, insertable = false)
     private String createdAt;
 }

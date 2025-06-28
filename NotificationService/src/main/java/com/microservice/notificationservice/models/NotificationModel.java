@@ -22,13 +22,10 @@ public class NotificationModel {
     @Column(name = "user_id")
     private String userId;
     @Column(name = "type")
-    private NotificationType type;
+    private String type;
     @Column(name = "message")
     private String message;
     @Column(name = "created_at", insertable = false, updatable = false)
     private String createdAt;
-    public enum NotificationType {
-        TOPUP,
-        TRANSACTION
-    }
+
 }

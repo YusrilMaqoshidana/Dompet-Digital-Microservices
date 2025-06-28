@@ -7,12 +7,14 @@ import com.microservice.topupservice.kafka.TopupPublisherService;
 import com.microservice.topupservice.models.TopupModel;
 import com.microservice.topupservice.models.TransactionStatus;
 import com.microservice.topupservice.repository.TopupRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -33,15 +35,11 @@ public class TopupService {
 
     @Transactional
     public TopupModel create(TopupRequestDTO requestDTO) {
-        topupRepository.findByExternalTransactionId(requestDTO.getExternalTransactionId())
-            .ifPresent(tx -> {
-                log.warn("Duplicate transaction attempt with external ID: {}", requestDTO.getExternalTransactionId());
-                throw new IllegalStateException("Transaction with ID " + requestDTO.getExternalTransactionId() + " already exists.");
-            });
-
+        log.info("Received a request to create a new topup transaction with external ID: {}", requestDTO.getExternalTransactionId());
         TopupModel topup = toTopupModel(requestDTO);
         TopupModel savedTopup = topupRepository.save(topup);
-        log.info("Transaction saved to DB with PENDING status. Internal ID: {}", savedTopup.getTopupId());
+        log.info("Transaction with external ID {} has been saved to DB with PENDING status. Internal ID: {}",
+                savedTopup.getExternalTransactionId(), savedTopup.getTopupId());
 
         TopupDTO kafkaDto = TopupDTO.builder()
                 .externalTransactionId(savedTopup.getExternalTransactionId())
@@ -57,24 +55,38 @@ public class TopupService {
     @Transactional
     public void finalizeTopup(WalletEventDTO event) {
         log.info("Finalizing transaction for external ID: {}", event.getExternalTransactionId());
-        topupRepository.findByExternalTransactionId(event.getExternalTransactionId()).ifPresentOrElse(
-            topup -> {
-                if (topup.getStatus() == TransactionStatus.PENDING) {
-                    boolean isSuccess = event.isSuccess();
-                    topup.setStatus(event.isSuccess() ? TransactionStatus.SUCCESS : TransactionStatus.FAILED);
-                    TopupModel finalTopupState = topupRepository.save(topup);
-                    log.info("Transaction {} updated to {}.", finalTopupState.getExternalTransactionId(), finalTopupState.getStatus());
-                    if (isSuccess) {
-                        topupPublisherService.publishTopupSuccessEvent(finalTopupState);
-                    } else {
-                        topupPublisherService.publishTopupFailedEvent(finalTopupState);
-                    }
-                } else {
-                    log.warn("Received event for already finalized transaction ID: {}", topup.getExternalTransactionId());
-                }
-            },
-            () -> log.error("Received wallet event but transaction not found for external ID: {}", event.getExternalTransactionId())
-        );
+
+        TopupModel originalTopup = topupRepository.findByExternalTransactionId(event.getExternalTransactionId())
+                .orElseThrow(() -> {
+                    log.error("Cannot finalize transaction. Transaction not found for external ID: {}", event.getExternalTransactionId());
+                    return new EntityNotFoundException("Topup transaction not found with external ID: " + event.getExternalTransactionId());
+                });
+        if (originalTopup.getStatus() != TransactionStatus.PENDING) {
+            log.warn("Ignoring event for an already finalized transaction. External ID: {}, Current Status: {}.",
+                    originalTopup.getExternalTransactionId(), originalTopup.getStatus());
+            return;
+        }
+        // 1. Tentukan status baru
+        boolean isSuccess = event.isSuccess();
+        TransactionStatus newStatus = isSuccess ? TransactionStatus.SUCCESS : TransactionStatus.FAILED;
+
+        // 2. Update status di DB dengan aman
+        topupRepository.updateStatusByExternalId(event.getExternalTransactionId(), newStatus);
+        log.info("Transaction {} successfully updated to {}.", originalTopup.getExternalTransactionId(), newStatus);
+        TopupModel updatedTopup = new TopupModel();
+        updatedTopup.setTopupId(originalTopup.getTopupId());
+        updatedTopup.setExternalTransactionId(originalTopup.getExternalTransactionId());
+        updatedTopup.setUserId(originalTopup.getUserId());
+        updatedTopup.setAmount(originalTopup.getAmount());
+        updatedTopup.setType(originalTopup.getType());
+        updatedTopup.setCreatedAt(originalTopup.getCreatedAt());
+        updatedTopup.setStatus(newStatus);
+        // 4. Panggil publisher dengan objek salinan yang aman
+        if (isSuccess) {
+            topupPublisherService.publishTopupSuccessEvent(updatedTopup);
+        } else {
+            topupPublisherService.publishTopupFailedEvent(updatedTopup);
+        }
     }
 
 
