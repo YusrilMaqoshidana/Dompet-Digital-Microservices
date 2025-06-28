@@ -31,43 +31,61 @@ public class NotificationService {
         notificationRepository.save(notificationModel);
     }
 
-    public NotificationModel getUserNotification(String userId) {
+    public List<NotificationModel> getUserNotification(String userId) {
         return notificationRepository.findNotificationModelByUserId(userId);
     }
 
     private NotificationModel eventToTopupResponse(TopupModelResponse event) {
         String generateId = UUID.randomUUID().toString();
-        String now = LocalDateTime.now().toString();
+        String message;
+        String status = event.getStatus().toLowerCase();
+        String type = event.getType().toUpperCase();
+
+        if ("SUCCESS".equalsIgnoreCase(status)) {
+            if ("CREDIT".equals(type)) {
+                message = "Top-up sebesar " + event.getAmount() + " telah berhasil. Saldo Anda telah bertambah.";
+            } else if ("DEBIT".equals(type)) {
+                message = "Transaksi debit sebesar " + event.getAmount() + " telah berhasil. Saldo Anda telah berkurang.";
+            } else {
+                message = "Transaksi sebesar " + event.getAmount() + " telah berhasil.";
+            }
+        } else if ("FAILED".equalsIgnoreCase(status)) {
+            if ("CREDIT".equals(type)) {
+                message = "Top-up sebesar " + event.getAmount() + " gagal. Saldo Anda tidak berubah. Silakan coba lagi.";
+            } else if ("DEBIT".equals(type)) {
+                message = "Transaksi debit sebesar " + event.getAmount() + " gagal. Saldo Anda tidak berkurang.";
+            } else {
+                message = "Transaksi sebesar " + event.getAmount() + " gagal.";
+            }
+        } else {
+            message = "Transaksi sebesar " + event.getAmount() + " statusnya " + status + ".";
+        }
+
         return NotificationModel.builder()
                 .notificationId(generateId)
                 .userId(event.getUserId())
                 .type(NotificationModel.NotificationType.TOPUP)
-                .message("Topup " + event.getStatus() + " dengan Jumlah " + event.getAmount())
-                .createdAt(now)
+                .message(message)
                 .build();
     }
 
     private NotificationModel eventToSenderTransactionResponse(TransactionModelResponse event) {
         String generateId = UUID.randomUUID().toString();
-        String now = LocalDateTime.now().toString();
         return NotificationModel.builder()
                 .notificationId(generateId)
                 .userId(event.getSenderUserId())
-                .type(NotificationModel.NotificationType.TOPUP)
-                .message("Pengiriman dana ke " + event.getReceiverUserId() + " dengan Jumlah" + event.getAmount() + " " + event.getStatus())
-                .createdAt(now)
+                .type(NotificationModel.NotificationType.TRANSACTION)
+                .message("Pengiriman dana ke ID " + event.getReceiverUserId() + " dengan Jumlah " + event.getAmount() + " " + event.getStatus())
                 .build();
     }
 
     private NotificationModel eventToReceiverTransactionResponse(TransactionModelResponse event) {
         String generateId = UUID.randomUUID().toString();
-        String now = LocalDateTime.now().toString();
         return NotificationModel.builder()
                 .notificationId(generateId)
                 .userId(event.getReceiverUserId())
-                .type(NotificationModel.NotificationType.TOPUP)
-                .message("Kamu menerima dana dari " + event.getSenderUserId() + " dengan Jumlah" + event.getAmount())
-                .createdAt(now)
+                .type(NotificationModel.NotificationType.TRANSACTION)
+                .message("Kamu menerima dana dari ID " + event.getSenderUserId() + " dengan Jumlah " + event.getAmount())
                 .build();
     }
 }

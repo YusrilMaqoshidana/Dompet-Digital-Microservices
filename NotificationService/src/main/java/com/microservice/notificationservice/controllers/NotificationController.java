@@ -12,25 +12,26 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/notifications")
 @RequiredArgsConstructor
 public class NotificationController {
     private final NotificationService notificationService;
 
-
     @GetMapping("/{userId}")
-    public ResponseEntity<ApiResponse<NotificationModel>> getUserReport(
+    public ResponseEntity<ApiResponse<List<NotificationModel>>> getUserReport(
             @PathVariable String userId
     ) {
-        NotificationModel notif = notificationService.getUserNotification(userId);
+        List<NotificationModel> notif = notificationService.getUserNotification(userId);
 
         if (notif == null) {
-            ApiResponse<NotificationModel> response = new ApiResponse<>(HttpStatus.NOT_FOUND.value(), "Notification for user with ID " + userId + " not found.");
+            ApiResponse<List<NotificationModel>> response = new ApiResponse<>(HttpStatus.NOT_FOUND.value(), "Notification for user with ID " + userId + " not found.");
             return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
 
-        ApiResponse<NotificationModel> response = new ApiResponse<>(
+        ApiResponse<List<NotificationModel>> response = new ApiResponse<>(
                 HttpStatus.OK.value(),
                 "Successfully retrieved notification details",
                 notif

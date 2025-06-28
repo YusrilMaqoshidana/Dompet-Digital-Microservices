@@ -20,17 +20,15 @@ public class NotificationModel {
     @Column(name = "notification_id")
     private String notificationId;
     @Column(name = "user_id")
-    private String userId; // ID pengguna yang menerima notifikasi
+    private String userId;
     @Column(name = "type")
-    private NotificationType type; // Jenis notifikasi (mis. TOPUP, TRANSACTION)
+    private NotificationType type;
     @Column(name = "message")
     private String message;
-    @Column(name = "created_at")
+    @Column(name = "created_at", insertable = false, updatable = false)
     private String createdAt;
-
     public enum NotificationType {
         TOPUP,
-        TRANSACTION,
-        GENERAL
+        TRANSACTION
     }
 }

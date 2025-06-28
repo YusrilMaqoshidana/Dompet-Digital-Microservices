@@ -15,7 +15,7 @@ public class NotificationConsumerService {
     private final NotificationService notificationService;
 
     @KafkaListener(topics = {"${topic.kafka.topup-success}", "${topic.kafka.topup-failed}"},
-            containerFactory = "topupListenerContainerFactory") // <-- Gunakan factory yang tepat
+            containerFactory = "topupListenerContainerFactory")
     public void consumeTopupEvents(TopupModelResponse event) {
         log.info("Consumed topup event -> {}", event);
         notificationService.createNotificationFromTopup(event);

@@ -17,5 +17,4 @@ public class TopupModelResponse {
     private String type;
     private String status;
     private String createdAt;
-    private String updatedAt;
 }
