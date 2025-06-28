@@ -86,8 +86,12 @@ services:
     depends_on:
       topup_db0:
         condition: service_healthy
-      transaction-service:
+      topup_db1:
         condition: service_healthy
+      topup_db2:
+        condition: service_healthy
+      # wallet-service:
+      #   condition: service_healthy
       broker:
         condition: service_healthy
     networks:
@@ -114,8 +118,6 @@ services:
         condition: service_healthy
       user-service:
         condition: service_healthy
-      # topup-service:
-      #   condition: service_healthy
       broker:
         condition: service_healthy
     networks:
@@ -227,9 +229,6 @@ services:
       timeout: 3s
       retries: 10
       start_period: 30s
-
- 
-
   wallet_db0:
     image: mysql:8.0
     container_name: wallet_db0
@@ -290,40 +289,56 @@ services:
       start_period: 30s
     networks:
       - onepay-networks
-
-  postgresql-db-transactions:
-    image: postgres:13
-    container_name: transaction_db0
-    restart: always
-    ports:
-      - "5434:5432"
+  topup_db0:
+    image: mysql:8.0
+    container_name: topup_db0
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: transactions
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: topupdb0
+    ports:
+      - "3310:3306"
     volumes:
-      - transaction_db0_data:/var/lib/postgresql/data
+      - topup_db0_data:/var/lib/mysql
+    networks:
+      - onepay-networks
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-psecret"]
       interval: 5s
       timeout: 3s
       retries: 10
       start_period: 30s
+  topup_db1:
+    image: mysql:8.0
+    container_name: topup_db1
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: topupdb1
+    ports:
+      - "3311:3306"
+    volumes:
+      - topup_db1_data:/var/lib/mysql
     networks:
       - onepay-networks
-
-  topup_db0:
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-psecret"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+  topup_db2:
     image: postgres:14-alpine
-    container_name: topup_db0
+    container_name: topup_db2
     restart: always
     ports:
-      - "5436:5432"
+      - "5435:5432"
     environment:
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=topup_db
+      - POSTGRES_PASSWORD=secret
+      - POSTGRES_DB=topupdb2
     volumes:
-      - topup_db0_data:/var/lib/postgresql/data
+      - topup_db2_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -332,7 +347,6 @@ services:
       start_period: 30s
     networks:
       - onepay-networks
-
   report_db0:
     image: postgres:14-alpine
     container_name: report_db0
@@ -365,6 +379,27 @@ services:
       - POSTGRES_DB=notification_db
     volumes:
       - notification_db0_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
+    networks:
+      - onepay-networks
+
+  postgresql-db-transactions:
+    image: postgres:13
+    container_name: transaction_db0
+    restart: always
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: transactions
+    volumes:
+      - transaction_db0_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -408,6 +443,8 @@ volumes:
   wallet_db1_data:
   wallet_db2_data:
   topup_db0_data:
+  topup_db1_data:
+  topup_db2_data:
   report_db0_data:
   notification_db0_data:
   kafka_data:
