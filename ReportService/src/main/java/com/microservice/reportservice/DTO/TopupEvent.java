@@ -11,5 +11,4 @@ public class TopupEvent {
     private String type;
     private String status;
     private String createdAt;
-    private String updatedAt;
 }
