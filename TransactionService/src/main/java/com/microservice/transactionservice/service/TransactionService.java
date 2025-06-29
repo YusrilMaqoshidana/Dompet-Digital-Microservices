@@ -23,7 +23,15 @@ public class TransactionService {
         return transactionRepository.findAll();
     }
 
-    public TransactionModel getByTransactionId(String transactionId){
+    public List<TransactionModel> getByTransactionIdBySender(String senderUserId){
+        return transactionRepository.getTransactionModelsBySenderUserId(senderUserId);
+    }
+
+    public List<TransactionModel> getByTransactionIdByReceiver(String receiverUserId){
+        return transactionRepository.getTransactionModelsByReceiverUserId(receiverUserId);
+    }
+
+    public TransactionModel getByTransactionId(String transactionId) {
         return transactionRepository.getTransactionModelByTransactionId(transactionId);
     }
 

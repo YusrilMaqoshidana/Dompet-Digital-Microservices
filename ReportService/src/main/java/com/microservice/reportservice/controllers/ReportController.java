@@ -1,5 +1,6 @@
 package com.microservice.reportservice.controllers;
 
+import com.microservice.reportservice.models.ReportModel;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,7 +24,7 @@ public class ReportController {
     private final ReportService reportService;
 
     @GetMapping("/{userId}")
-    public ResponseEntity<Page<ReportResponse>> getUserReport(
+    public ResponseEntity<Page<ReportModel>> getUserReport(
             @PathVariable String userId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -31,7 +32,7 @@ public class ReportController {
             @RequestParam(defaultValue = "DESC") Sort.Direction direction
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
-        Page<ReportResponse> userReport = reportService.getUserReport(userId, pageable);
+        Page<ReportModel> userReport = reportService.getUserReport(userId, pageable);
         return ResponseEntity.ok(userReport);
     }
 }

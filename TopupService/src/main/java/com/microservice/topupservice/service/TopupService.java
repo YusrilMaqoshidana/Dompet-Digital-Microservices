@@ -36,6 +36,11 @@ public class TopupService {
     @Transactional
     public TopupModel create(TopupRequestDTO requestDTO) {
         log.info("Received a request to create a new topup transaction with external ID: {}", requestDTO.getExternalTransactionId());
+        topupRepository.findByExternalTransactionId(requestDTO.getExternalTransactionId())
+                .ifPresent(tx -> {
+                    log.warn("Duplicate transaction attempt with external ID: {}", requestDTO.getExternalTransactionId());
+                    throw new IllegalStateException("Transaction with ID " + requestDTO.getExternalTransactionId() + " already exists.");
+                });
         TopupModel topup = toTopupModel(requestDTO);
         TopupModel savedTopup = topupRepository.save(topup);
         log.info("Transaction with external ID {} has been saved to DB with PENDING status. Internal ID: {}",
@@ -66,11 +71,9 @@ public class TopupService {
                     originalTopup.getExternalTransactionId(), originalTopup.getStatus());
             return;
         }
-        // 1. Tentukan status baru
         boolean isSuccess = event.isSuccess();
         TransactionStatus newStatus = isSuccess ? TransactionStatus.SUCCESS : TransactionStatus.FAILED;
 
-        // 2. Update status di DB dengan aman
         topupRepository.updateStatusByExternalId(event.getExternalTransactionId(), newStatus);
         log.info("Transaction {} successfully updated to {}.", originalTopup.getExternalTransactionId(), newStatus);
         TopupModel updatedTopup = new TopupModel();
@@ -81,7 +84,6 @@ public class TopupService {
         updatedTopup.setType(originalTopup.getType());
         updatedTopup.setCreatedAt(originalTopup.getCreatedAt());
         updatedTopup.setStatus(newStatus);
-        // 4. Panggil publisher dengan objek salinan yang aman
         if (isSuccess) {
             topupPublisherService.publishTopupSuccessEvent(updatedTopup);
         } else {

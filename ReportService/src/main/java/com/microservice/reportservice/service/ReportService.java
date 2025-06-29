@@ -38,7 +38,7 @@ public class ReportService {
         log.info("Saved TRANSFER_IN history for user {}", event.getReceiverUserId());
     }
 
-    public Page<ReportResponse> getUserReport(String userId, Pageable pageable) {
+    public Page<ReportModel> getUserReport(String userId, Pageable pageable) {
         Page<ReportModel> reportPage = repository.findByUserId(userId, pageable);
         return reportPage.map(this::toReportResponse);
     }
@@ -82,14 +82,15 @@ public class ReportService {
         return receiverReport;
     }
 
-    private ReportResponse toReportResponse(ReportModel report) {
-        return ReportResponse.builder()
+    private ReportModel toReportResponse(ReportModel report) {
+        return ReportModel.builder()
                 .reportId(report.getReportId())
                 .userId(report.getUserId())
                 .type(report.getType())
                 .status(report.getStatus())
                 .amount(report.getAmount())
                 .description(report.getDescription())
+                .transactionDate(report.getTransactionDate())
                 .build();
     }
 

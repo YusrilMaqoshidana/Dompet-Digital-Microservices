@@ -57,12 +57,12 @@ public class TransactionController {
         }
     }
 
-    @GetMapping("/detail")
-    public ResponseEntity<ApiResponse<TransactionModel>> getDetailTransaction(
-            @RequestParam("transaction_id") String transactionId
+    @GetMapping("/detailSender")
+    public ResponseEntity<ApiResponse<List<TransactionModel>>> getDetailTransactionSender(
+            @RequestParam("sender_id") String transactionId
     ) {
         try {
-            TransactionModel users = transactionService.getByTransactionId(transactionId);
+            List<TransactionModel> users = transactionService.getByTransactionIdBySender(transactionId);
             if (users == null){
                 return new ResponseEntity<>(
                         new ApiResponse<>(
@@ -72,7 +72,7 @@ public class TransactionController {
                         HttpStatus.NOT_FOUND
                 );
             }
-            ApiResponse<TransactionModel> response = new ApiResponse<>(
+            ApiResponse<List<TransactionModel>> response = new ApiResponse<>(
                     HttpStatus.OK.value(),
                     "Successfully get detail users",
                     users
@@ -80,7 +80,38 @@ public class TransactionController {
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
 
-            ApiResponse<TransactionModel> errorResponse = new ApiResponse<>(
+            ApiResponse<List<TransactionModel>> errorResponse = new ApiResponse<>(
+                    HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                    "An error occurred while fetching users. %s." + e.getMessage()
+            );
+            return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/detailReceiver")
+    public ResponseEntity<ApiResponse<List<TransactionModel>>> getDetailTransactionReceiver(
+            @RequestParam("receiver_id") String transactionId
+    ) {
+        try {
+            List<TransactionModel> users = transactionService.getByTransactionIdBySender(transactionId);
+            if (users == null){
+                return new ResponseEntity<>(
+                        new ApiResponse<>(
+                                HttpStatus.NOT_FOUND.value(),
+                                "No users found"
+                        ),
+                        HttpStatus.NOT_FOUND
+                );
+            }
+            ApiResponse<List<TransactionModel>> response = new ApiResponse<>(
+                    HttpStatus.OK.value(),
+                    "Successfully get detail users",
+                    users
+            );
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+
+            ApiResponse<List<TransactionModel>> errorResponse = new ApiResponse<>(
                     HttpStatus.INTERNAL_SERVER_ERROR.value(),
                     "An error occurred while fetching users. %s." + e.getMessage()
             );
