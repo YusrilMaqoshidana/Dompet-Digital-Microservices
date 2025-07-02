@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -34,6 +35,16 @@ public class NotificationService {
     public List<NotificationModel> getUserNotification(String userId) {
         return notificationRepository.findNotificationModelByUserId(userId);
     }
+
+    public boolean deleteNotificationById(String notifId) {
+        Optional<NotificationModel> notification = notificationRepository.findById(notifId);
+        if (notification.isPresent()) {
+            notificationRepository.deleteById(notifId);
+            return true;
+        }
+        return false;
+    }
+
 
     private NotificationModel eventToTopupResponse(TopupModelResponse event) {
         String generateId = UUID.randomUUID().toString();

@@ -32,7 +32,6 @@ public class UserService {
         UserModel user = userRepository.getUserModelByUserId(userId);
         user.setFullName(newProfile.fullName);
         user.setEmail(newProfile.email);
-        user.setPhoneNumber(newProfile.phoneNumber);
         return userRepository.save(user);
     }
 

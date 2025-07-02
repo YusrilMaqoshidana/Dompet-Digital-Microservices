@@ -1,16 +1,14 @@
 package com.microservice.reportservice.controllers;
 
+import com.microservice.reportservice.DTO.ApiResponse;
 import com.microservice.reportservice.models.ReportModel;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.microservice.reportservice.DTO.ReportResponse;
 import com.microservice.reportservice.service.ReportService;
@@ -35,4 +33,16 @@ public class ReportController {
         Page<ReportModel> userReport = reportService.getUserReport(userId, pageable);
         return ResponseEntity.ok(userReport);
     }
+
+    @DeleteMapping("/{report_id}")
+    public ResponseEntity<ApiResponse<Void>> deleteUserReport(@PathVariable("report_id") String reportId) {
+        reportService.deleteReportById(reportId);
+        ApiResponse<Void> response = new ApiResponse<>(
+                HttpStatus.OK.value(),
+                "Report deleted successfully"
+        );
+        return ResponseEntity.ok(response);
+    }
+
+
 }

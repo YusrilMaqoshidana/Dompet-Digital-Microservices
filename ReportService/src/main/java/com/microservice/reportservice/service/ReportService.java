@@ -4,7 +4,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import com.microservice.reportservice.DTO.ReportResponse;
 import com.microservice.reportservice.DTO.TopupEvent;
 import com.microservice.reportservice.DTO.TransactionEvent;
 import com.microservice.reportservice.models.ReportModel;
@@ -14,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -42,6 +42,14 @@ public class ReportService {
         Page<ReportModel> reportPage = repository.findByUserId(userId, pageable);
         return reportPage.map(this::toReportResponse);
     }
+
+    public void deleteReportById(String reportId) {
+        Optional<ReportModel> reportOptional = repository.findByReportId(reportId);
+        if (reportOptional.isPresent()) {
+            repository.deleteById(reportId);
+        }
+    }
+
 
     private ReportModel toReportModel(TopupEvent event) {
         ReportModel report = new ReportModel();
